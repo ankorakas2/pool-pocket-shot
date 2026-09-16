@@ -1,6 +1,8 @@
-# PocketShot
+# Pool Pocket Shot
 
 3D US 8-ball / 9-ball for Android. Unity Personal (0 €). No paid assets.
+
+Working title — we can change the final name later.
 
 ## Play in the editor
 
@@ -10,7 +12,7 @@
    - Android Build Support
    - OpenJDK
    - Android SDK & NDK Tools
-4. Hub → Open → this folder (`PocketShot`).
+4. Hub → Open → this project folder.
 5. Open `Assets/Scenes/Main.unity` and press Play.
 
 If Unity asks for money for the editor or Android module, stop and we switch to Godot.
@@ -27,8 +29,8 @@ If Unity asks for money for the editor or Android module, stop and we switch to 
 ## Android APK (sideload, 0 €)
 
 1. USB debugging on the phone, or copy the APK.
-2. In Unity: **PocketShot → Build Android APK**
-3. Output: `Builds/PocketShot.apk`
+2. In Unity: **Pool Pocket Shot → Build Android APK**
+3. Output: `Builds/PoolPocketShot.apk`
 
 ## Modes
 

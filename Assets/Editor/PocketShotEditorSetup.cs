@@ -17,9 +17,9 @@ public static class PocketShotEditorSetup
     public static void Apply()
     {
         PlayerSettings.companyName = "Anestis";
-        PlayerSettings.productName = "PocketShot";
-        PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.anestis.pocketshot");
-        PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone, "com.anestis.pocketshot");
+        PlayerSettings.productName = "Pool Pocket Shot";
+        PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.ankorakas2.poolpocketshot");
+        PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone, "com.ankorakas2.poolpocketshot");
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
         PlayerSettings.allowedAutorotateToPortrait = false;
         PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
@@ -66,12 +66,12 @@ public static class PocketShotEditorSetup
 
 public static class AndroidApkBuild
 {
-    [MenuItem("PocketShot/Build Android APK")]
+    [MenuItem("Pool Pocket Shot/Build Android APK")]
     public static void BuildApk()
     {
         PocketShotEditorSetup.Apply();
         Directory.CreateDirectory("Builds");
-        var apk = Path.Combine("Builds", "PocketShot.apk");
+        var apk = Path.Combine("Builds", "PoolPocketShot.apk");
         var result = BuildPipeline.BuildPlayer(new BuildPlayerOptions
         {
             scenes = new[] { "Assets/Scenes/Main.unity" },

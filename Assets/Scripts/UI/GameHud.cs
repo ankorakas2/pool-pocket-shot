@@ -46,7 +46,7 @@ public sealed class GameHud : MonoBehaviour
     GameObject BuildMenu()
     {
         var root = Panel("Menu", new Color(0.05f, 0.07f, 0.1f, 0.92f));
-        Label(root.transform, "PocketShot", 72, new Vector2(0, 320), new Vector2(900, 120));
+        Label(root.transform, "Pool Pocket Shot", 72, new Vector2(0, 320), new Vector2(900, 120));
         Label(root.transform, "3D pool — US 8-ball & 9-ball", 32, new Vector2(0, 230), new Vector2(900, 50));
         Btn(root.transform, "8-ball · Pass & Play", new Vector2(0, 110), () => _flow.StartMatch(GameModeKind.EightBall, false, 1));
         Btn(root.transform, "8-ball · vs CPU (Easy)", new Vector2(0, 20), () => _flow.StartMatch(GameModeKind.EightBall, true, 0));
