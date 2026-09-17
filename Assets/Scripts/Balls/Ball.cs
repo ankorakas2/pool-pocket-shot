@@ -21,7 +21,7 @@ public sealed class Ball : MonoBehaviour
     Vector3 _rackLocal;
     Transform _home;
 
-    public void Setup(int number, Material material, PhysicMaterial physic)
+    public void Setup(int number, Material material, PhysicsMaterial physic)
     {
         Number = number;
         Group = number == 0 ? BallGroup.Cue : number == 8 ? BallGroup.Eight : number < 8 ? BallGroup.Solid : BallGroup.Stripe;

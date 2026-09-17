@@ -15,7 +15,7 @@ public static class BallFactory
         new Color(0.06f, 0.06f, 0.06f)
     };
 
-    public static Ball Create(int number, Transform parent, PhysicMaterial ballPhysic, Shader lit)
+    public static Ball Create(int number, Transform parent, PhysicsMaterial ballPhysic, Shader lit)
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         go.transform.SetParent(parent, false);

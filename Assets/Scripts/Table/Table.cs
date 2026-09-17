@@ -6,7 +6,7 @@ public sealed class Table : MonoBehaviour
     public float[] PocketRadii { get; private set; }
     public Transform PlayRoot => transform;
 
-    public void Build(PhysicMaterial cloth, PhysicMaterial cushion, Material feltMat, Material woodMat, Material pocketMat)
+    public void Build(PhysicsMaterial cloth, PhysicsMaterial cushion, Material feltMat, Material woodMat, Material pocketMat)
     {
         PocketCenters = new Vector3[6];
         PocketRadii = new float[6];
@@ -104,7 +104,7 @@ public sealed class Table : MonoBehaviour
         Wood("Wood_NegZ", new Vector3(0f, h * 0.5f, -hz - rail * 0.5f), new Vector3(PoolConstants.PlayingWidth + rail * 2f, h, rail));
     }
 
-    void BuildCushion(string name, Vector3 pos, Vector3 scale, PhysicMaterial cushion)
+    void BuildCushion(string name, Vector3 pos, Vector3 scale, PhysicsMaterial cushion)
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name;

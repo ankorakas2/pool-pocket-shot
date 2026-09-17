@@ -54,29 +54,29 @@ public sealed class GameBootstrap : MonoBehaviour
         var wood = MakeMat(lit, new Color(0.32f, 0.18f, 0.08f));
         var pocket = MakeMat(lit, new Color(0.02f, 0.02f, 0.02f));
 
-        var cloth = new PhysicMaterial("Cloth")
+        var cloth = new PhysicsMaterial("Cloth")
         {
             dynamicFriction = 0.2f,
             staticFriction = 0.22f,
             bounciness = 0.03f,
-            frictionCombine = PhysicMaterialCombine.Average,
-            bounceCombine = PhysicMaterialCombine.Minimum
+            frictionCombine = PhysicsMaterialCombine.Average,
+            bounceCombine = PhysicsMaterialCombine.Minimum
         };
-        var cushion = new PhysicMaterial("Cushion")
+        var cushion = new PhysicsMaterial("Cushion")
         {
             dynamicFriction = 0.18f,
             staticFriction = 0.2f,
             bounciness = 0.72f,
-            frictionCombine = PhysicMaterialCombine.Average,
-            bounceCombine = PhysicMaterialCombine.Maximum
+            frictionCombine = PhysicsMaterialCombine.Average,
+            bounceCombine = PhysicsMaterialCombine.Maximum
         };
-        var ballPhys = new PhysicMaterial("Ball")
+        var ballPhys = new PhysicsMaterial("Ball")
         {
             dynamicFriction = 0.06f,
             staticFriction = 0.06f,
             bounciness = 0.94f,
-            frictionCombine = PhysicMaterialCombine.Minimum,
-            bounceCombine = PhysicMaterialCombine.Maximum
+            frictionCombine = PhysicsMaterialCombine.Minimum,
+            bounceCombine = PhysicsMaterialCombine.Maximum
         };
 
         var tableGo = new GameObject("Table");
