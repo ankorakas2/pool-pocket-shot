@@ -20,34 +20,39 @@ public sealed class CueController : MonoBehaviour
 
     public Vector3 AimDirection => Quaternion.Euler(0f, AimYaw, 0f) * Vector3.forward;
 
-    public void Bind(Ball cue, Table table, Camera cam)
+    public void Bind(Ball cue, Table table, Camera cam, LookLibrary look)
     {
         _cue = cue;
         _table = table;
         _cam = cam;
-        _stick = GameObject.CreatePrimitive(PrimitiveType.Cylinder).transform;
-        _stick.name = "CueStick";
-        _stick.localScale = new Vector3(0.012f, 0.72f, 0.012f);
-        Object.Destroy(_stick.GetComponent<Collider>());
-        var sh = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-        var mat = new Material(sh);
-        var wood = new Color(0.45f, 0.28f, 0.12f);
-        if (mat.HasProperty("_BaseColor"))
-        {
-            mat.SetColor("_BaseColor", wood);
-        }
-
-        mat.color = wood;
-        _stick.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        var root = new GameObject("CueStick");
+        _stick = root.transform;
+        Part(root.transform, "Butt", new Vector3(0f, -0.42f, 0f), new Vector3(0.022f, 0.22f, 0.022f), look.CueButt);
+        Part(root.transform, "Shaft", new Vector3(0f, 0.05f, 0f), new Vector3(0.011f, 0.42f, 0.011f), look.CueWood);
+        Part(root.transform, "Ferrule", new Vector3(0f, 0.48f, 0f), new Vector3(0.01f, 0.025f, 0.01f), look.Ferrule);
+        Part(root.transform, "Tip", new Vector3(0f, 0.51f, 0f), new Vector3(0.009f, 0.012f, 0.009f), look.Tip);
 
         var aimGo = new GameObject("AimLine");
         _aim = aimGo.AddComponent<LineRenderer>();
         _aim.positionCount = 2;
-        _aim.startWidth = 0.012f;
-        _aim.endWidth = 0.004f;
+        _aim.startWidth = 0.01f;
+        _aim.endWidth = 0.0035f;
+        _aim.numCapVertices = 4;
         _aim.material = new Material(Shader.Find("Sprites/Default"));
-        _aim.startColor = new Color(1f, 0.95f, 0.55f, 0.9f);
-        _aim.endColor = new Color(1f, 0.95f, 0.55f, 0.15f);
+        _aim.startColor = new Color(1f, 0.92f, 0.45f, 0.95f);
+        _aim.endColor = new Color(1f, 0.85f, 0.3f, 0.12f);
+        _aim.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    }
+
+    static void Part(Transform parent, string name, Vector3 localPos, Vector3 scale, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        go.name = name;
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = localPos;
+        go.transform.localScale = scale;
+        Object.Destroy(go.GetComponent<Collider>());
+        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
     }
 
     public void SetVisible(bool on)
@@ -84,7 +89,7 @@ public sealed class CueController : MonoBehaviour
         }
 
         var dir = AimDirection;
-        var pull = 0.42f + Power * 0.35f + _anim;
+        var pull = 0.55f + Power * 0.38f + _anim;
         var ballPos = _cue.transform.position;
         if (_stick != null)
         {

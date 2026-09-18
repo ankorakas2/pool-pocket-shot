@@ -34,8 +34,9 @@ public sealed class GameBootstrap : MonoBehaviour
     {
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
-        QualitySettings.shadows = ShadowQuality.Disable;
-        QualitySettings.antiAliasing = 0;
+        QualitySettings.shadows = ShadowQuality.All;
+        QualitySettings.shadowResolution = ShadowResolution.Medium;
+        QualitySettings.antiAliasing = 2;
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Screen.orientation = ScreenOrientation.LandscapeLeft;
         Screen.autorotateToPortrait = false;
@@ -49,10 +50,7 @@ public sealed class GameBootstrap : MonoBehaviour
 
     void BuildWorld()
     {
-        var lit = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Sprites/Default");
-        var felt = MakeMat(lit, new Color(0.07f, 0.38f, 0.2f));
-        var wood = MakeMat(lit, new Color(0.32f, 0.18f, 0.08f));
-        var pocket = MakeMat(lit, new Color(0.02f, 0.02f, 0.02f));
+        var look = LookLibrary.Create();
 
         var cloth = new PhysicsMaterial("Cloth")
         {
@@ -79,40 +77,62 @@ public sealed class GameBootstrap : MonoBehaviour
             bounceCombine = PhysicsMaterialCombine.Maximum
         };
 
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = new Color(0.18f, 0.2f, 0.22f);
+        RenderSettings.fog = true;
+        RenderSettings.fogColor = new Color(0.05f, 0.06f, 0.07f);
+        RenderSettings.fogMode = FogMode.Exponential;
+        RenderSettings.fogDensity = 0.035f;
+
         var tableGo = new GameObject("Table");
         tableGo.transform.SetParent(transform, false);
         var table = tableGo.AddComponent<Table>();
-        table.Build(cloth, cushion, felt, wood, pocket);
+        table.Build(cloth, cushion, look);
 
         var ballsRoot = new GameObject("Balls");
         ballsRoot.transform.SetParent(transform, false);
         var balls = new Ball[16];
         for (var i = 0; i < 16; i++)
         {
-            balls[i] = BallFactory.Create(i, ballsRoot.transform, ballPhys, lit);
+            balls[i] = BallFactory.Create(i, ballsRoot.transform, ballPhys, look);
             balls[i].gameObject.SetActive(false);
         }
 
         var lightGo = new GameObject("KeyLight");
         var light = lightGo.AddComponent<Light>();
         light.type = LightType.Directional;
-        light.intensity = 1.05f;
-        light.shadows = LightShadows.None;
-        lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+        light.color = new Color(1f, 0.96f, 0.88f);
+        light.intensity = 0.85f;
+        light.shadows = LightShadows.Soft;
+        light.shadowStrength = 0.55f;
+        lightGo.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
+
+        var lamp = new GameObject("OverheadLamp");
+        var spot = lamp.AddComponent<Light>();
+        spot.type = LightType.Spot;
+        spot.color = new Color(1f, 0.92f, 0.72f);
+        spot.intensity = 6.5f;
+        spot.range = 7f;
+        spot.spotAngle = 95f;
+        spot.innerSpotAngle = 55f;
+        spot.shadows = LightShadows.None;
+        lamp.transform.position = new Vector3(0f, 2.15f, 0f);
+        lamp.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
         var fill = new GameObject("FillLight");
         var fl = fill.AddComponent<Light>();
         fl.type = LightType.Point;
-        fl.range = 8f;
-        fl.intensity = 1.4f;
+        fl.range = 10f;
+        fl.intensity = 1.1f;
+        fl.color = new Color(0.55f, 0.65f, 0.8f);
         fl.shadows = LightShadows.None;
-        fill.transform.position = new Vector3(0f, 2.2f, 0f);
+        fill.transform.position = new Vector3(-1.4f, 1.6f, -1.2f);
 
         var rig = gameObject.AddComponent<CameraRig>();
         rig.Build();
 
         var cueCtl = gameObject.AddComponent<CueController>();
-        cueCtl.Bind(balls[0], table, rig.Cam);
+        cueCtl.Bind(balls[0], table, rig.Cam, look);
         cueCtl.SetVisible(false);
         cueCtl.InputLocked = true;
 
@@ -130,7 +150,7 @@ public sealed class GameBootstrap : MonoBehaviour
         var flow = gameObject.AddComponent<MatchFlow>();
         var hud = gameObject.AddComponent<GameHud>();
         flow.Wire(balls, table, cueCtl, resolver, settled, ai, hud, audio);
-        hud.Build(flow, cueCtl);
+        hud.Build(flow, cueCtl, look);
     }
 
     void OnDestroy()
@@ -139,26 +159,5 @@ public sealed class GameBootstrap : MonoBehaviour
         {
             _booted = false;
         }
-    }
-
-    static Material MakeMat(Shader lit, Color c)
-    {
-        var m = new Material(lit);
-        if (m.HasProperty("_BaseColor"))
-        {
-            m.SetColor("_BaseColor", c);
-        }
-
-        if (m.HasProperty("_Color"))
-        {
-            m.SetColor("_Color", c);
-        }
-
-        if (m.HasProperty("_Smoothness"))
-        {
-            m.SetFloat("_Smoothness", 0.35f);
-        }
-
-        return m;
     }
 }

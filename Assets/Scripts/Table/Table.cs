@@ -6,7 +6,7 @@ public sealed class Table : MonoBehaviour
     public float[] PocketRadii { get; private set; }
     public Transform PlayRoot => transform;
 
-    public void Build(PhysicsMaterial cloth, PhysicsMaterial cushion, Material feltMat, Material woodMat, Material pocketMat)
+    public void Build(PhysicsMaterial cloth, PhysicsMaterial cushion, LookLibrary look)
     {
         PocketCenters = new Vector3[6];
         PocketRadii = new float[6];
@@ -17,26 +17,29 @@ public sealed class Table : MonoBehaviour
         var hx = width * 0.5f;
         var hz = length * 0.5f;
 
+        BuildRoom(look);
+
         var felt = GameObject.CreatePrimitive(PrimitiveType.Cube);
         felt.name = "Felt";
         felt.transform.SetParent(transform, false);
         felt.transform.localScale = new Vector3(width + 0.02f, 0.04f, length + 0.02f);
         felt.transform.localPosition = new Vector3(0f, -0.02f, 0f);
-        felt.GetComponent<MeshRenderer>().sharedMaterial = feltMat;
+        felt.GetComponent<MeshRenderer>().sharedMaterial = look.Felt;
         DestroyCollider(felt);
         var feltCol = felt.AddComponent<BoxCollider>();
         feltCol.sharedMaterial = cloth;
         feltCol.size = Vector3.one;
 
-        BuildFrame(hx, hz, rail, woodMat);
+        BuildFrame(hx, hz, rail, look);
+        BuildLegs(hx, hz, rail, look.Wood);
 
         var gap = PoolConstants.PocketGap;
-        BuildCushion("Rail_PosX_Foot", new Vector3(hx + 0.027f, PoolConstants.CushionHeight * 0.5f, hz * 0.5f + 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion);
-        BuildCushion("Rail_PosX_Head", new Vector3(hx + 0.027f, PoolConstants.CushionHeight * 0.5f, -hz * 0.5f - 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion);
-        BuildCushion("Rail_NegX_Foot", new Vector3(-hx - 0.027f, PoolConstants.CushionHeight * 0.5f, hz * 0.5f + 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion);
-        BuildCushion("Rail_NegX_Head", new Vector3(-hx - 0.027f, PoolConstants.CushionHeight * 0.5f, -hz * 0.5f - 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion);
-        BuildCushion("Rail_PosZ", new Vector3(0f, PoolConstants.CushionHeight * 0.5f, hz + 0.027f), new Vector3(width - gap, PoolConstants.CushionHeight, 0.055f), cushion);
-        BuildCushion("Rail_NegZ", new Vector3(0f, PoolConstants.CushionHeight * 0.5f, -hz - 0.027f), new Vector3(width - gap, PoolConstants.CushionHeight, 0.055f), cushion);
+        BuildCushion("Rail_PosX_Foot", new Vector3(hx + 0.027f, PoolConstants.CushionHeight * 0.5f, hz * 0.5f + 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
+        BuildCushion("Rail_PosX_Head", new Vector3(hx + 0.027f, PoolConstants.CushionHeight * 0.5f, -hz * 0.5f - 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
+        BuildCushion("Rail_NegX_Foot", new Vector3(-hx - 0.027f, PoolConstants.CushionHeight * 0.5f, hz * 0.5f + 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
+        BuildCushion("Rail_NegX_Head", new Vector3(-hx - 0.027f, PoolConstants.CushionHeight * 0.5f, -hz * 0.5f - 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
+        BuildCushion("Rail_PosZ", new Vector3(0f, PoolConstants.CushionHeight * 0.5f, hz + 0.027f), new Vector3(width - gap, PoolConstants.CushionHeight, 0.055f), cushion, look.Cushion);
+        BuildCushion("Rail_NegZ", new Vector3(0f, PoolConstants.CushionHeight * 0.5f, -hz - 0.027f), new Vector3(width - gap, PoolConstants.CushionHeight, 0.055f), cushion, look.Cushion);
 
         Vector3[] pockets =
         {
@@ -60,31 +63,76 @@ public sealed class Table : MonoBehaviour
             hole.transform.localPosition = PocketCenters[i] + Vector3.down * 0.02f;
             hole.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             hole.transform.localScale = new Vector3(radius * 2.1f, 0.03f, radius * 2.1f);
-            hole.GetComponent<MeshRenderer>().sharedMaterial = pocketMat;
+            hole.GetComponent<MeshRenderer>().sharedMaterial = look.Pocket;
             DestroyCollider(hole);
             var trigger = hole.AddComponent<SphereCollider>();
             trigger.isTrigger = true;
             trigger.radius = 0.55f;
             var pocket = hole.AddComponent<PocketTrigger>();
             pocket.Index = i;
+
+            var rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            rim.name = $"PocketRim_{i}";
+            rim.transform.SetParent(transform, false);
+            rim.transform.localPosition = PocketCenters[i] + Vector3.up * 0.012f;
+            rim.transform.localScale = new Vector3(radius * 2.35f, 0.008f, radius * 2.35f);
+            rim.GetComponent<MeshRenderer>().sharedMaterial = look.Brass;
+            DestroyCollider(rim);
         }
 
-        var kitchen = new GameObject("KitchenLine");
+        var kitchen = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        kitchen.name = "KitchenLine";
         kitchen.transform.SetParent(transform, false);
-        kitchen.transform.localPosition = new Vector3(0f, 0.001f, PoolConstants.HeadStringZ);
-        var line = kitchen.AddComponent<LineRenderer>();
-        line.positionCount = 2;
-        line.useWorldSpace = false;
-        line.SetPosition(0, new Vector3(-hx, 0.002f, 0f));
-        line.SetPosition(1, new Vector3(hx, 0.002f, 0f));
-        line.startWidth = 0.008f;
-        line.endWidth = 0.008f;
-        line.material = new Material(Shader.Find("Sprites/Default"));
-        line.startColor = new Color(1f, 1f, 1f, 0.35f);
-        line.endColor = new Color(1f, 1f, 1f, 0.35f);
+        kitchen.transform.localPosition = new Vector3(0f, 0.0015f, PoolConstants.HeadStringZ);
+        kitchen.transform.localScale = new Vector3(width - 0.08f, 0.001f, 0.006f);
+        kitchen.GetComponent<MeshRenderer>().sharedMaterial = look.Diamond;
+        DestroyCollider(kitchen);
     }
 
-    void BuildFrame(float hx, float hz, float rail, Material woodMat)
+    void BuildRoom(LookLibrary look)
+    {
+        var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        floor.name = "RoomFloor";
+        floor.transform.SetParent(transform, false);
+        floor.transform.localPosition = new Vector3(0f, -0.72f, 0f);
+        floor.transform.localScale = new Vector3(8f, 0.08f, 10f);
+        floor.GetComponent<MeshRenderer>().sharedMaterial = look.Floor;
+        DestroyCollider(floor);
+
+        void Wall(string name, Vector3 pos, Vector3 scale)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = pos;
+            go.transform.localScale = scale;
+            go.GetComponent<MeshRenderer>().sharedMaterial = look.Wall;
+            DestroyCollider(go);
+        }
+
+        Wall("Wall_N", new Vector3(0f, 1.8f, 4.6f), new Vector3(8f, 5.2f, 0.12f));
+        Wall("Wall_S", new Vector3(0f, 1.8f, -4.6f), new Vector3(8f, 5.2f, 0.12f));
+        Wall("Wall_E", new Vector3(3.9f, 1.8f, 0f), new Vector3(0.12f, 5.2f, 9.2f));
+        Wall("Wall_W", new Vector3(-3.9f, 1.8f, 0f), new Vector3(0.12f, 5.2f, 9.2f));
+
+        var ceiling = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ceiling.name = "Ceiling";
+        ceiling.transform.SetParent(transform, false);
+        ceiling.transform.localPosition = new Vector3(0f, 4.5f, 0f);
+        ceiling.transform.localScale = new Vector3(8f, 0.08f, 10f);
+        ceiling.GetComponent<MeshRenderer>().sharedMaterial = look.Wall;
+        DestroyCollider(ceiling);
+
+        var lamp = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        lamp.name = "LampShade";
+        lamp.transform.SetParent(transform, false);
+        lamp.transform.localPosition = new Vector3(0f, 1.85f, 0f);
+        lamp.transform.localScale = new Vector3(0.55f, 0.08f, 0.55f);
+        lamp.GetComponent<MeshRenderer>().sharedMaterial = look.Brass;
+        DestroyCollider(lamp);
+    }
+
+    void BuildFrame(float hx, float hz, float rail, LookLibrary look)
     {
         void Wood(string name, Vector3 pos, Vector3 scale)
         {
@@ -93,46 +141,74 @@ public sealed class Table : MonoBehaviour
             go.transform.SetParent(transform, false);
             go.transform.localPosition = pos;
             go.transform.localScale = scale;
-            go.GetComponent<MeshRenderer>().sharedMaterial = woodMat;
+            go.GetComponent<MeshRenderer>().sharedMaterial = look.Wood;
             DestroyCollider(go);
         }
 
-        var h = 0.08f;
+        var h = 0.09f;
         Wood("Wood_PosX", new Vector3(hx + rail * 0.5f, h * 0.5f, 0f), new Vector3(rail, h, PoolConstants.PlayingLength + rail * 2f));
         Wood("Wood_NegX", new Vector3(-hx - rail * 0.5f, h * 0.5f, 0f), new Vector3(rail, h, PoolConstants.PlayingLength + rail * 2f));
         Wood("Wood_PosZ", new Vector3(0f, h * 0.5f, hz + rail * 0.5f), new Vector3(PoolConstants.PlayingWidth + rail * 2f, h, rail));
         Wood("Wood_NegZ", new Vector3(0f, h * 0.5f, -hz - rail * 0.5f), new Vector3(PoolConstants.PlayingWidth + rail * 2f, h, rail));
+
+        void Diamond(Vector3 pos)
+        {
+            var d = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            d.name = "Diamond";
+            d.transform.SetParent(transform, false);
+            d.transform.localPosition = pos;
+            d.transform.localRotation = Quaternion.Euler(0f, 45f, 0f);
+            d.transform.localScale = new Vector3(0.018f, 0.008f, 0.018f);
+            d.GetComponent<MeshRenderer>().sharedMaterial = look.Diamond;
+            DestroyCollider(d);
+        }
+
+        for (var i = -2; i <= 2; i++)
+        {
+            if (i == 0)
+            {
+                continue;
+            }
+
+            Diamond(new Vector3(hx + rail * 0.5f, h + 0.002f, i * hz * 0.4f));
+            Diamond(new Vector3(-hx - rail * 0.5f, h + 0.002f, i * hz * 0.4f));
+        }
+
+        Diamond(new Vector3(0f, h + 0.002f, hz + rail * 0.5f));
+        Diamond(new Vector3(0f, h + 0.002f, -hz - rail * 0.5f));
     }
 
-    void BuildCushion(string name, Vector3 pos, Vector3 scale, PhysicsMaterial cushion)
+    void BuildLegs(float hx, float hz, float rail, Material wood)
+    {
+        Vector3[] feet =
+        {
+            new Vector3(hx + rail * 0.15f, -0.36f, hz + rail * 0.15f),
+            new Vector3(-hx - rail * 0.15f, -0.36f, hz + rail * 0.15f),
+            new Vector3(hx + rail * 0.15f, -0.36f, -hz - rail * 0.15f),
+            new Vector3(-hx - rail * 0.15f, -0.36f, -hz - rail * 0.15f)
+        };
+        foreach (var p in feet)
+        {
+            var leg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leg.name = "Leg";
+            leg.transform.SetParent(transform, false);
+            leg.transform.localPosition = p;
+            leg.transform.localScale = new Vector3(0.09f, 0.72f, 0.09f);
+            leg.GetComponent<MeshRenderer>().sharedMaterial = wood;
+            DestroyCollider(leg);
+        }
+    }
+
+    void BuildCushion(string name, Vector3 pos, Vector3 scale, PhysicsMaterial cushion, Material mat)
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name;
         go.transform.SetParent(transform, false);
         go.transform.localPosition = pos;
         go.transform.localScale = scale;
-        go.GetComponent<MeshRenderer>().sharedMaterial = go.GetComponent<MeshRenderer>().material;
         var col = go.GetComponent<BoxCollider>();
         col.sharedMaterial = cushion;
-        var r = go.GetComponent<MeshRenderer>();
-        r.sharedMaterial = CreateTint(new Color(0.05f, 0.28f, 0.14f));
-    }
-
-    static Material CreateTint(Color c)
-    {
-        var sh = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-        var m = new Material(sh);
-        if (m.HasProperty("_BaseColor"))
-        {
-            m.SetColor("_BaseColor", c);
-        }
-
-        if (m.HasProperty("_Color"))
-        {
-            m.SetColor("_Color", c);
-        }
-
-        return m;
+        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
     }
 
     static void DestroyCollider(GameObject go)

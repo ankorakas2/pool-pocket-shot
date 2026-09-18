@@ -19,10 +19,13 @@ public sealed class GameHud : MonoBehaviour
     RectTransform _spinPad;
     GameObject _placeBtn;
 
-    public void Build(MatchFlow flow, CueController cue)
+    LookLibrary _look;
+
+    public void Build(MatchFlow flow, CueController cue, LookLibrary look)
     {
         _flow = flow;
         _cue = cue;
+        _look = look;
         var canvasGo = new GameObject("Canvas");
         canvasGo.transform.SetParent(transform, false);
         _canvas = canvasGo.AddComponent<Canvas>();
@@ -45,15 +48,17 @@ public sealed class GameHud : MonoBehaviour
 
     GameObject BuildMenu()
     {
-        var root = Panel("Menu", new Color(0.05f, 0.07f, 0.1f, 0.92f));
-        Label(root.transform, "Pool Pocket Shot", 72, new Vector2(0, 320), new Vector2(900, 120));
-        Label(root.transform, "3D pool — US 8-ball & 9-ball", 32, new Vector2(0, 230), new Vector2(900, 50));
-        Btn(root.transform, "8-ball · Pass & Play", new Vector2(0, 110), () => _flow.StartMatch(GameModeKind.EightBall, false, 1));
-        Btn(root.transform, "8-ball · vs CPU (Easy)", new Vector2(0, 20), () => _flow.StartMatch(GameModeKind.EightBall, true, 0));
-        Btn(root.transform, "8-ball · vs CPU (Hard)", new Vector2(0, -70), () => _flow.StartMatch(GameModeKind.EightBall, true, 2));
-        Btn(root.transform, "9-ball · Pass & Play", new Vector2(0, -160), () => _flow.StartMatch(GameModeKind.NineBall, false, 1));
-        Btn(root.transform, "9-ball · vs CPU", new Vector2(0, -250), () => _flow.StartMatch(GameModeKind.NineBall, true, 1));
-        Btn(root.transform, "Quit", new Vector2(0, -360), () => Application.Quit());
+        var root = Panel("Menu", new Color(0.03f, 0.05f, 0.04f, 0.9f));
+        var card = ImageGo(root.transform, "Card", _look.UiPanel, new Vector2(0, 20), new Vector2(760, 920), new Color(1f, 1f, 1f, 0.97f));
+        var parent = card.transform;
+        Label(parent, "POOL POCKET SHOT", 54, new Vector2(0, 360), new Vector2(700, 80), TextAnchor.MiddleCenter, new Color(0.93f, 0.8f, 0.38f));
+        Label(parent, "US 8-ball  ·  9-ball", 26, new Vector2(0, 290), new Vector2(700, 40), TextAnchor.MiddleCenter, new Color(0.75f, 0.82f, 0.72f));
+        MenuBtn(parent, "8-Ball  ·  Pass & Play", new Vector2(0, 170), () => _flow.StartMatch(GameModeKind.EightBall, false, 1));
+        MenuBtn(parent, "8-Ball  ·  vs CPU Easy", new Vector2(0, 70), () => _flow.StartMatch(GameModeKind.EightBall, true, 0));
+        MenuBtn(parent, "8-Ball  ·  vs CPU Hard", new Vector2(0, -30), () => _flow.StartMatch(GameModeKind.EightBall, true, 2));
+        MenuBtn(parent, "9-Ball  ·  Pass & Play", new Vector2(0, -130), () => _flow.StartMatch(GameModeKind.NineBall, false, 1));
+        MenuBtn(parent, "9-Ball  ·  vs CPU", new Vector2(0, -230), () => _flow.StartMatch(GameModeKind.NineBall, true, 1));
+        MenuBtn(parent, "Quit", new Vector2(0, -340), () => Application.Quit(), true);
         return root;
     }
 
@@ -63,19 +68,20 @@ public sealed class GameHud : MonoBehaviour
         root.transform.SetParent(_canvas.transform, false);
         StretchOn(root);
 
-        _who = Label(root.transform, "Player 1", 36, new Vector2(-620, 460), new Vector2(600, 60), TextAnchor.MiddleLeft);
-        _status = Label(root.transform, "Open table", 28, new Vector2(-620, 400), new Vector2(700, 40), TextAnchor.MiddleLeft);
-        _extra = Label(root.transform, "", 24, new Vector2(0, 360), new Vector2(1000, 40));
+        var bar = ImageGo(root.transform, "TopBar", _look.UiPanel, new Vector2(0, 470), new Vector2(1840, 110), new Color(1, 1, 1, 0.88f));
+        _who = Label(bar.transform, "Player 1", 32, new Vector2(-620, 12), new Vector2(600, 44), TextAnchor.MiddleLeft, new Color(0.95f, 0.86f, 0.45f));
+        _status = Label(bar.transform, "Open table", 24, new Vector2(-620, -22), new Vector2(700, 36), TextAnchor.MiddleLeft, new Color(0.82f, 0.88f, 0.8f));
+        _extra = Label(root.transform, "", 24, new Vector2(0, 360), new Vector2(1000, 40), TextAnchor.MiddleCenter, Color.white);
 
-        var shoot = Btn(root.transform, "SHOOT", new Vector2(720, -420), () => _flow.Shoot());
-        shoot.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 120);
+        var shoot = MenuBtn(root.transform, "SHOOT", new Vector2(760, -430), () => _flow.Shoot());
+        shoot.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 110);
 
-        _placeBtn = Btn(root.transform, "PLACE CUE", new Vector2(720, -280), () => _flow.ConfirmPlacement());
+        _placeBtn = MenuBtn(root.transform, "PLACE CUE", new Vector2(760, -300), () => _flow.ConfirmPlacement());
         _placeBtn.SetActive(false);
 
-        Btn(root.transform, "Menu", new Vector2(820, 460), () => _flow.ReturnToMenu()).GetComponent<RectTransform>().sizeDelta = new Vector2(180, 70);
+        MenuBtn(root.transform, "Menu", new Vector2(820, 470), () => _flow.ReturnToMenu()).GetComponent<RectTransform>().sizeDelta = new Vector2(180, 64);
 
-        Label(root.transform, "Power", 22, new Vector2(-720, -360), new Vector2(200, 30), TextAnchor.MiddleLeft);
+        Label(root.transform, "POWER", 18, new Vector2(-760, -330), new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
         var sliderGo = new GameObject("Power");
         sliderGo.transform.SetParent(root.transform, false);
         var srt = sliderGo.AddComponent<RectTransform>();
@@ -100,20 +106,11 @@ public sealed class GameHud : MonoBehaviour
         _power.targetGraphic = bg;
         _power.onValueChanged.AddListener(v => _cue.Power = v);
 
-        Label(root.transform, "English", 22, new Vector2(-720, -250), new Vector2(200, 30), TextAnchor.MiddleLeft);
-        var pad = new GameObject("SpinPad");
-        pad.transform.SetParent(root.transform, false);
-        _spinPad = pad.AddComponent<RectTransform>();
-        _spinPad.anchoredPosition = new Vector2(-720, -140);
-        _spinPad.sizeDelta = new Vector2(160, 160);
-        var padImg = pad.AddComponent<Image>();
-        padImg.color = new Color(0.9f, 0.9f, 0.92f, 0.85f);
-        var knob = new GameObject("Knob");
-        knob.transform.SetParent(pad.transform, false);
-        _spinKnob = knob.AddComponent<RectTransform>();
-        _spinKnob.sizeDelta = new Vector2(28, 28);
-        _spinKnob.anchoredPosition = Vector2.zero;
-        knob.AddComponent<Image>().color = new Color(0.8f, 0.15f, 0.15f);
+        Label(root.transform, "ENGLISH", 18, new Vector2(-760, -220), new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
+        var pad = ImageGo(root.transform, "SpinPad", _look.UiWhite, new Vector2(-760, -120), new Vector2(150, 150), new Color(0.92f, 0.92f, 0.9f, 0.95f));
+        _spinPad = pad.GetComponent<RectTransform>();
+        var knob = ImageGo(pad.transform, "Knob", _look.UiWhite, Vector2.zero, new Vector2(28, 28), new Color(0.75f, 0.12f, 0.12f));
+        _spinKnob = knob.GetComponent<RectTransform>();
         var spin = pad.AddComponent<SpinPad>();
         spin.Pad = _spinPad;
         spin.Knob = _spinKnob;
@@ -124,9 +121,10 @@ public sealed class GameHud : MonoBehaviour
 
     GameObject BuildOver()
     {
-        var root = Panel("GameOver", new Color(0.02f, 0.02f, 0.05f, 0.82f));
-        _overText = Label(root.transform, "Win", 48, Vector2.zero, new Vector2(1000, 120));
-        Btn(root.transform, "Back to menu", new Vector2(0, -160), () => _flow.ReturnToMenu());
+        var root = Panel("GameOver", new Color(0.02f, 0.03f, 0.03f, 0.78f));
+        ImageGo(root.transform, "Card", _look.UiPanel, Vector2.zero, new Vector2(900, 360), Color.white);
+        _overText = Label(root.transform, "Win", 42, new Vector2(0, 40), new Vector2(800, 120), TextAnchor.MiddleCenter, new Color(0.95f, 0.85f, 0.4f));
+        MenuBtn(root.transform, "Back to menu", new Vector2(0, -90), () => _flow.ReturnToMenu());
         return root;
     }
 
@@ -203,7 +201,7 @@ public sealed class GameHud : MonoBehaviour
         StretchOnRt(rt);
     }
 
-    Text Label(Transform parent, string text, int size, Vector2 pos, Vector2 sizeDelta, TextAnchor anchor = TextAnchor.MiddleCenter)
+    Text Label(Transform parent, string text, int size, Vector2 pos, Vector2 sizeDelta, TextAnchor anchor = TextAnchor.MiddleCenter, Color? color = null)
     {
         var go = new GameObject("Label");
         go.transform.SetParent(parent, false);
@@ -213,28 +211,43 @@ public sealed class GameHud : MonoBehaviour
         var t = go.AddComponent<Text>();
         t.font = UiFont();
         t.fontSize = size;
-        t.color = Color.white;
+        t.color = color ?? Color.white;
         t.alignment = anchor;
         t.text = text;
         t.horizontalOverflow = HorizontalWrapMode.Overflow;
+        t.fontStyle = FontStyle.Bold;
         return t;
+    }
+
+    GameObject MenuBtn(Transform parent, string text, Vector2 pos, UnityEngine.Events.UnityAction click, bool gold = false)
+    {
+        var go = ImageGo(parent, text, gold ? _look.UiGold : _look.UiButton, pos, new Vector2(560, 78), Color.white);
+        var b = go.AddComponent<Button>();
+        b.targetGraphic = go.GetComponent<Image>();
+        b.onClick.AddListener(click);
+        var t = Label(go.transform, text, 26, Vector2.zero, new Vector2(540, 70));
+        t.raycastTarget = false;
+        t.color = gold ? new Color(0.12f, 0.08f, 0.04f) : Color.white;
+        return go;
+    }
+
+    GameObject ImageGo(Transform parent, string name, Sprite sprite, Vector2 pos, Vector2 size, Color color)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = size;
+        var img = go.AddComponent<Image>();
+        img.sprite = sprite;
+        img.type = Image.Type.Sliced;
+        img.color = color;
+        return go;
     }
 
     GameObject Btn(Transform parent, string text, Vector2 pos, UnityEngine.Events.UnityAction click)
     {
-        var go = new GameObject(text);
-        go.transform.SetParent(parent, false);
-        var rt = go.AddComponent<RectTransform>();
-        rt.anchoredPosition = pos;
-        rt.sizeDelta = new Vector2(520, 80);
-        var img = go.AddComponent<Image>();
-        img.color = new Color(0.12f, 0.45f, 0.28f, 0.95f);
-        var b = go.AddComponent<Button>();
-        b.targetGraphic = img;
-        b.onClick.AddListener(click);
-        var t = Label(go.transform, text, 28, Vector2.zero, new Vector2(500, 70));
-        t.raycastTarget = false;
-        return go;
+        return MenuBtn(parent, text, pos, click);
     }
 
     static Font UiFont()

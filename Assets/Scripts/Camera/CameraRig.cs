@@ -4,9 +4,9 @@ public sealed class CameraRig : MonoBehaviour
 {
     public Transform Pivot;
     public Camera Cam;
-    public float Zoom = 3.6f;
-    public float Pitch = 55f;
-    public float Yaw = 0f;
+    public float Zoom = 4.35f;
+    public float Pitch = 60f;
+    public float Yaw = 18f;
     Vector3 _pan;
     float _lastPinch;
 
@@ -21,7 +21,10 @@ public sealed class CameraRig : MonoBehaviour
         Cam = camGo.AddComponent<Camera>();
         Cam.nearClipPlane = 0.05f;
         Cam.farClipPlane = 40f;
-        Cam.fieldOfView = 45f;
+        Cam.fieldOfView = 40f;
+        Cam.clearFlags = CameraClearFlags.SolidColor;
+        Cam.backgroundColor = new Color(0.04f, 0.045f, 0.055f);
+        Cam.allowMSAA = true;
         camGo.AddComponent<AudioListener>();
         Apply();
     }
