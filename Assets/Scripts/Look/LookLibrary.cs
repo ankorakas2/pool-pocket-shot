@@ -24,18 +24,24 @@ public static class LookLibrary
     {
         var sh = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Sprites/Default");
         var look = new LookLibrary { Lit = new Material(sh) };
-        look.Felt = look.Make(new Color(0.08f, 0.42f, 0.22f), 0.08f, 0f, FeltTex());
-        look.Wood = look.Make(new Color(0.38f, 0.2f, 0.08f), 0.28f, 0f, WoodTex());
-        look.Cushion = look.Make(new Color(0.06f, 0.32f, 0.16f), 0.18f, 0f, FeltTex());
-        look.Pocket = look.Make(new Color(0.04f, 0.03f, 0.03f), 0.12f, 0f, null);
-        look.Brass = look.Make(new Color(0.72f, 0.55f, 0.22f), 0.65f, 0.55f, null);
-        look.Floor = look.Make(new Color(0.12f, 0.09f, 0.07f), 0.2f, 0f, WoodTex());
+        var woodA = Load("Wood_Albedo");
+        var woodN = Load("Wood_Normal");
+        var fabricN = Load("Fabric_Normal");
+        var metalA = Load("Metal_Albedo");
+        var metalN = Load("Metal_Normal");
+
+        look.Felt = look.Make(new Color(0.1f, 0.46f, 0.24f), 0.11f, 0f, FeltTex(), fabricN, new Vector2(4.5f, 7f));
+        look.Wood = look.Make(Color.white, 0.32f, 0f, woodA ?? WoodTex(), woodN, new Vector2(1.6f, 2.4f));
+        look.Cushion = look.Make(new Color(0.07f, 0.34f, 0.18f), 0.16f, 0f, FeltTex(), fabricN, new Vector2(3f, 3f));
+        look.Pocket = look.Make(new Color(0.04f, 0.03f, 0.03f), 0.12f, 0.05f, null);
+        look.Brass = look.Make(new Color(0.85f, 0.68f, 0.28f), 0.55f, 0.72f, metalA, metalN, new Vector2(2f, 2f));
+        look.Floor = look.Make(new Color(0.45f, 0.38f, 0.3f), 0.22f, 0f, woodA ?? WoodTex(), woodN, new Vector2(6f, 8f));
         look.Wall = look.Make(new Color(0.07f, 0.08f, 0.1f), 0.15f, 0f, null);
-        look.CueWood = look.Make(new Color(0.72f, 0.55f, 0.32f), 0.4f, 0f, WoodTex());
-        look.CueButt = look.Make(new Color(0.18f, 0.08f, 0.04f), 0.35f, 0f, WoodTex());
-        look.Ferrule = look.Make(new Color(0.92f, 0.92f, 0.9f), 0.7f, 0.2f, null);
-        look.Tip = look.Make(new Color(0.15f, 0.35f, 0.7f), 0.2f, 0f, null);
-        look.Diamond = look.Make(new Color(0.95f, 0.9f, 0.75f), 0.8f, 0.15f, null);
+        look.CueWood = look.Make(new Color(1f, 0.92f, 0.78f), 0.42f, 0f, woodA ?? WoodTex(), woodN, new Vector2(2f, 8f));
+        look.CueButt = look.Make(new Color(0.35f, 0.18f, 0.08f), 0.3f, 0f, woodA ?? WoodTex(), woodN, new Vector2(1f, 4f));
+        look.Ferrule = look.Make(new Color(0.92f, 0.92f, 0.9f), 0.7f, 0.25f, metalA, metalN);
+        look.Tip = look.Make(new Color(0.15f, 0.35f, 0.7f), 0.2f, 0f, fabricN);
+        look.Diamond = look.Make(new Color(0.95f, 0.9f, 0.75f), 0.8f, 0.2f, metalA, metalN);
         look.UiPanel = RoundSprite(64, 64, 10, new Color(0.04f, 0.07f, 0.06f, 0.94f));
         look.UiButton = RoundSprite(64, 64, 12, new Color(0.1f, 0.38f, 0.22f, 1f));
         look.UiGold = RoundSprite(64, 64, 12, new Color(0.72f, 0.55f, 0.22f, 1f));
@@ -49,7 +55,12 @@ public static class LookLibrary
         return m;
     }
 
-    Material Make(Color color, float smooth, float metal, Texture tex)
+    static Texture2D Load(string name)
+    {
+        return Resources.Load<Texture2D>("Look/" + name);
+    }
+
+    Material Make(Color color, float smooth, float metal, Texture albedo, Texture normal = null, Vector2? tile = null)
     {
         var m = new Material(Lit.shader);
         if (m.HasProperty("_BaseColor"))
@@ -72,17 +83,36 @@ public static class LookLibrary
             m.SetFloat("_Metallic", metal);
         }
 
-        if (tex != null)
+        var scale = tile ?? Vector2.one;
+        if (albedo != null)
         {
             if (m.HasProperty("_BaseMap"))
             {
-                m.SetTexture("_BaseMap", tex);
+                m.SetTexture("_BaseMap", albedo);
+                m.SetTextureScale("_BaseMap", scale);
             }
 
             if (m.HasProperty("_MainTex"))
             {
-                m.SetTexture("_MainTex", tex);
+                m.SetTexture("_MainTex", albedo);
+                m.SetTextureScale("_MainTex", scale);
             }
+        }
+
+        if (normal != null)
+        {
+            if (m.HasProperty("_BumpMap"))
+            {
+                m.SetTexture("_BumpMap", normal);
+                m.SetTextureScale("_BumpMap", scale);
+            }
+
+            if (m.HasProperty("_BumpScale"))
+            {
+                m.SetFloat("_BumpScale", 1f);
+            }
+
+            m.EnableKeyword("_NORMALMAP");
         }
 
         return m;
