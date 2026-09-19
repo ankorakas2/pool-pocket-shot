@@ -5,6 +5,7 @@ public sealed class PocketScanner : MonoBehaviour
     Table _table;
     Ball[] _balls;
     PocketTrigger[] _triggers;
+    public bool IgnoreCueBall;
 
     public void Bind(Table table, Ball[] balls)
     {
@@ -24,6 +25,11 @@ public sealed class PocketScanner : MonoBehaviour
         {
             var ball = _balls[i];
             if (ball == null || ball.Pocketed || !ball.isActiveAndEnabled)
+            {
+                continue;
+            }
+
+            if (IgnoreCueBall && ball.Group == BallGroup.Cue)
             {
                 continue;
             }

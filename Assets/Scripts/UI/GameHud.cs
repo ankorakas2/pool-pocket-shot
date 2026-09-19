@@ -17,6 +17,7 @@ public sealed class GameHud : MonoBehaviour
     Slider _power;
     RectTransform _spinKnob;
     RectTransform _spinPad;
+    SpinPad _spin;
     GameObject _placeBtn;
 
     LookLibrary _look;
@@ -115,7 +116,7 @@ public sealed class GameHud : MonoBehaviour
         var bg = sliderGo.AddComponent<Image>();
         bg.color = new Color(0.15f, 0.15f, 0.18f, 0.9f);
         _power = sliderGo.AddComponent<Slider>();
-        _power.minValue = 0.05f;
+        _power.minValue = 0f;
         _power.maxValue = 1f;
         _power.value = 0.5f;
         var fill = new GameObject("Fill", typeof(RectTransform));
@@ -127,8 +128,16 @@ public sealed class GameHud : MonoBehaviour
         fr.offsetMax = Vector2.zero;
         var fi = fill.AddComponent<Image>();
         fi.color = new Color(0.95f, 0.7f, 0.15f);
+        fi.raycastTarget = false;
+        var handleGo = new GameObject("Handle", typeof(RectTransform));
+        handleGo.transform.SetParent(sliderGo.transform, false);
+        var hr = handleGo.GetComponent<RectTransform>();
+        hr.sizeDelta = new Vector2(28f, 78f);
+        var hi = handleGo.AddComponent<Image>();
+        hi.color = new Color(0.95f, 0.86f, 0.45f);
         _power.fillRect = fr;
-        _power.targetGraphic = bg;
+        _power.handleRect = hr;
+        _power.targetGraphic = hi;
         _power.onValueChanged.AddListener(v => _cue.Power = v);
 
         var powerLbl = Label(root.transform, "POWER", 18, Vector2.zero, new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
@@ -142,14 +151,15 @@ public sealed class GameHud : MonoBehaviour
         _spinPad = pad.GetComponent<RectTransform>();
         _spinPad.anchorMin = new Vector2(0f, 0f);
         _spinPad.anchorMax = new Vector2(0f, 0f);
-        _spinPad.pivot = new Vector2(0f, 0f);
-        _spinPad.anchoredPosition = new Vector2(40f, 170f);
+        _spinPad.pivot = new Vector2(0.5f, 0.5f);
+        _spinPad.anchoredPosition = new Vector2(115f, 245f);
         var knob = ImageGo(pad.transform, "Knob", _look.UiWhite, Vector2.zero, new Vector2(28, 28), new Color(0.75f, 0.12f, 0.12f));
+        knob.GetComponent<Image>().raycastTarget = false;
         _spinKnob = knob.GetComponent<RectTransform>();
-        var spin = pad.AddComponent<SpinPad>();
-        spin.Pad = _spinPad;
-        spin.Knob = _spinKnob;
-        spin.OnChanged = v => _cue.English = v;
+        _spin = pad.AddComponent<SpinPad>();
+        _spin.Pad = _spinPad;
+        _spin.Knob = _spinKnob;
+        _spin.OnChanged = v => _cue.English = v;
 
         var engLbl = Label(root.transform, "ENGLISH", 18, Vector2.zero, new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
         var engRt = engLbl.GetComponent<RectTransform>();
@@ -217,6 +227,8 @@ public sealed class GameHud : MonoBehaviour
         {
             _power.value = _cue.Power;
         }
+
+        _spin?.Reset();
     }
 
     public void ShowGameOver(string msg)
@@ -337,27 +349,47 @@ public sealed class GameHud : MonoBehaviour
     }
 }
 
-public sealed class SpinPad : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
+public sealed class SpinPad : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IPointerUpHandler
 {
     public RectTransform Pad;
     public RectTransform Knob;
     public System.Action<Vector2> OnChanged;
 
     public void OnPointerDown(PointerEventData eventData) => Apply(eventData);
+    public void OnBeginDrag(PointerEventData eventData) => Apply(eventData);
     public void OnDrag(PointerEventData eventData) => Apply(eventData);
 
     public void OnPointerUp(PointerEventData eventData)
     {
     }
 
+    public void Reset()
+    {
+        if (Knob != null)
+        {
+            Knob.anchoredPosition = Vector2.zero;
+        }
+
+        OnChanged?.Invoke(Vector2.zero);
+    }
+
     void Apply(PointerEventData eventData)
     {
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(Pad, eventData.position, eventData.pressEventCamera, out var local);
-        var half = Pad.sizeDelta * 0.5f;
+        if (Pad == null || Knob == null)
+        {
+            return;
+        }
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(Pad, eventData.position, null, out var local);
+        var half = Pad.rect.size * 0.5f;
+        if (half.x < 0.01f || half.y < 0.01f)
+        {
+            half = Pad.sizeDelta * 0.5f;
+        }
+
         local.x = Mathf.Clamp(local.x, -half.x, half.x);
         local.y = Mathf.Clamp(local.y, -half.y, half.y);
         Knob.anchoredPosition = local;
-        var v = new Vector2(local.x / half.x, local.y / half.y);
-        OnChanged?.Invoke(v);
+        OnChanged?.Invoke(new Vector2(local.x / half.x, local.y / half.y));
     }
 }

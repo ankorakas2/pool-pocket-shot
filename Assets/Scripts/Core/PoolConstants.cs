@@ -8,14 +8,15 @@ public static class PoolConstants
     public const float PlayingWidth = 1.27f;
     public const float RailWidth = 0.12f;
     public const float CushionHeight = 0.045f;
-    public const float CornerPocketRadius = 0.072f;
-    public const float SidePocketRadius = 0.064f;
-    public const float PocketGap = 0.11f;
+    public const float CornerPocketRadius = 0.05f;
+    public const float SidePocketRadius = 0.046f;
+    public const float CornerPocketOut = 0.03f;
+    public const float SidePocketOut = 0.042f;
     public const float SettleLinear = 0.035f;
     public const float SettleAngular = 0.45f;
     public const float SettleHold = 0.28f;
-    public const float MaxShotImpulse = 4.8f;
-    public const float MinShotImpulse = 0.35f;
+    public const float MaxShotImpulse = 1.55f;
+    public const float MinShotImpulse = 0.05f;
 
     public static float HeadStringZ => -PlayingLength * 0.25f;
     public static float FootSpotZ => PlayingLength * 0.25f;

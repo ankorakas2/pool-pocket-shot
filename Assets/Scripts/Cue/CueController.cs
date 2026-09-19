@@ -9,6 +9,7 @@ public sealed class CueController : MonoBehaviour
     public Vector2 English;
     public bool InputLocked;
     public bool PlacingCue;
+    public bool KitchenOnlyPlacement;
 
     Ball _cue;
     Transform _stick;
@@ -90,7 +91,7 @@ public sealed class CueController : MonoBehaviour
         }
 
         var dir = AimDirection;
-        var pull = 0.55f + Power * 0.38f + _anim;
+        var pull = 0.48f + Mathf.Clamp01(Power) * Mathf.Clamp01(Power) * 0.5f + _anim;
         var ballPos = _cue.transform.position;
         if (_stick != null)
         {
@@ -120,7 +121,7 @@ public sealed class CueController : MonoBehaviour
             return;
         }
 
-        var p = _table.ClampOnCloth(ray.GetPoint(enter), true);
+        var p = _table.ClampOnCloth(ray.GetPoint(enter), KitchenOnlyPlacement);
         _cue.PlaceAndFreeze(p);
     }
 
@@ -184,7 +185,9 @@ public sealed class CueController : MonoBehaviour
         }
 
         var dir = AimDirection;
-        var impulse = Mathf.Lerp(PoolConstants.MinShotImpulse, PoolConstants.MaxShotImpulse, Power);
+        var t = Mathf.Clamp01(Power);
+        t *= t;
+        var impulse = Mathf.Lerp(PoolConstants.MinShotImpulse, PoolConstants.MaxShotImpulse, t);
         var right = Vector3.Cross(Vector3.up, dir).normalized;
         var up = Vector3.up;
         var point = _cue.transform.position - dir * PoolConstants.BallRadius

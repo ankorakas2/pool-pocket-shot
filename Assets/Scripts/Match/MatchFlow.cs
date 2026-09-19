@@ -28,6 +28,7 @@ public sealed class MatchFlow : MonoBehaviour
     GameHud _hud;
     PoolAudio _audio;
     CameraRig _rig;
+    PocketScanner _pockets;
 
     public void Wire(Ball[] balls, Table table, CueController cueCtl, ShotResolver resolver, PhysicsSettledDetector settled, PoolAi ai, GameHud hud, PoolAudio audio)
     {
@@ -41,6 +42,7 @@ public sealed class MatchFlow : MonoBehaviour
         _hud = hud;
         _audio = audio;
         _rig = GetComponent<CameraRig>();
+        _pockets = GetComponent<PocketScanner>();
     }
 
     public void StartMatch(GameModeKind kind, bool vsAi, int difficulty)
@@ -65,6 +67,7 @@ public sealed class MatchFlow : MonoBehaviour
         _cueCtl.English = Vector2.zero;
         _cueCtl.PlacingCue = false;
         _cueCtl.InputLocked = false;
+        SetIgnoreCuePockets(false);
         _cueCtl.SetVisible(true);
         _resolver.IgnorePocketsFor(0.45f);
         State = MatchState.Aiming;
@@ -79,9 +82,10 @@ public sealed class MatchFlow : MonoBehaviour
         if (_cueCtl.PlacingCue)
         {
             ConfirmPlacement();
+            return;
         }
 
-        if (State != MatchState.Aiming || _cue.Pocketed)
+        if (State != MatchState.Aiming || _cue.Pocketed || !_cue.isActiveAndEnabled)
         {
             return;
         }
@@ -104,6 +108,7 @@ public sealed class MatchFlow : MonoBehaviour
         }
 
         _cueCtl.PlacingCue = false;
+        SetIgnoreCuePockets(false);
         Mode.OnBreakPlaced();
         _cueCtl.SetVisible(true);
         RefreshHud(Mode.StatusLabel);
@@ -115,7 +120,12 @@ public sealed class MatchFlow : MonoBehaviour
 
     void Update()
     {
-        if (State == MatchState.Aiming && !_cueCtl.InputLocked &&
+        if (State == MatchState.Aiming && _cueCtl.PlacingCue)
+        {
+            RescuePlacedCue();
+        }
+
+        if (State == MatchState.Aiming && !_cueCtl.InputLocked && !_cueCtl.PlacingCue &&
             (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)))
         {
             Shoot();
@@ -156,15 +166,19 @@ public sealed class MatchFlow : MonoBehaviour
         {
             CurrentPlayer = 1 - CurrentPlayer;
             _cueCtl.PlacingCue = Mode.BallInHand;
+            _cueCtl.KitchenOnlyPlacement = Mode.KitchenOnlyPlacement;
+            SetIgnoreCuePockets(_cueCtl.PlacingCue);
             _cueCtl.InputLocked = false;
             State = MatchState.Aiming;
             _cueCtl.SetVisible(!_cueCtl.PlacingCue);
+            _rig?.SetAimView(true);
             RefreshHud(Mode.FoulMessage + (Mode.BallInHand ? " — place cue ball" : ""));
         }
         else if (outcome == TurnOutcome.Switch)
         {
             CurrentPlayer = 1 - CurrentPlayer;
             _cueCtl.PlacingCue = false;
+            SetIgnoreCuePockets(false);
             _cueCtl.InputLocked = false;
             State = MatchState.Aiming;
             _cueCtl.SetVisible(true);
@@ -173,6 +187,7 @@ public sealed class MatchFlow : MonoBehaviour
         else
         {
             _cueCtl.PlacingCue = false;
+            SetIgnoreCuePockets(false);
             _cueCtl.InputLocked = false;
             State = MatchState.Aiming;
             _cueCtl.SetVisible(true);
@@ -195,6 +210,7 @@ public sealed class MatchFlow : MonoBehaviour
         var p = _table.ClampOnCloth(PoolConstants.HeadSpot, Mode.KitchenOnlyPlacement);
         _cue.PlaceAndFreeze(p);
         _cueCtl.PlacingCue = false;
+        SetIgnoreCuePockets(false);
         Mode.OnBreakPlaced();
         _cueCtl.SetVisible(true);
     }
@@ -208,6 +224,32 @@ public sealed class MatchFlow : MonoBehaviour
 
         _ai.ChooseShot(_balls, _cue, _table, Mode, AiDifficulty, _cueCtl);
         Shoot();
+    }
+
+    void RescuePlacedCue()
+    {
+        if (_cue == null || Mode == null)
+        {
+            return;
+        }
+
+        if (!_cue.Pocketed && _cue.isActiveAndEnabled)
+        {
+            return;
+        }
+
+        var p = _table.ClampOnCloth(PoolConstants.HeadSpot, Mode.KitchenOnlyPlacement);
+        _cue.PlaceAndFreeze(p);
+    }
+
+    void SetIgnoreCuePockets(bool ignore)
+    {
+        if (_pockets != null)
+        {
+            _pockets.IgnoreCueBall = ignore;
+        }
+
+        _resolver.IgnoreCueBall = ignore;
     }
 
     void RefreshHud(string extra)

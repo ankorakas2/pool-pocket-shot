@@ -14,6 +14,7 @@ public sealed class ShotResolver : MonoBehaviour
     bool _armed;
     HashSet<Ball> _seen = new HashSet<Ball>();
     float _ignorePocketsUntil;
+    public bool IgnoreCueBall;
 
     public void Bind(Ball cue, PocketTrigger[] pockets, Ball[] balls)
     {
@@ -69,6 +70,11 @@ public sealed class ShotResolver : MonoBehaviour
     void OnPocket(Ball ball, int pocket)
     {
         if (ball == null || ball.Pocketed || Time.time < _ignorePocketsUntil)
+        {
+            return;
+        }
+
+        if (IgnoreCueBall && ball.Group == BallGroup.Cue)
         {
             return;
         }

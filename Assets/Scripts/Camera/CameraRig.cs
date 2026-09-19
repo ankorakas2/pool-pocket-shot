@@ -68,7 +68,7 @@ public sealed class CameraRig : MonoBehaviour
 
     void LateUpdate()
     {
-        if (_aimView && _cueBall != null && _cueBall.isActiveAndEnabled && _cue != null)
+        if (_aimView && _cue != null && _cueBall != null && (_cue.PlacingCue || _cueBall.isActiveAndEnabled))
         {
             ApplyAimView();
             return;
@@ -125,6 +125,15 @@ public sealed class CameraRig : MonoBehaviour
     void ApplyAimView()
     {
         var ball = _cueBall.transform.position;
+        if (_cue.PlacingCue)
+        {
+            Cam.fieldOfView = 48f;
+            var desired = ball + new Vector3(0.15f, 1.25f, -0.9f);
+            Cam.transform.position = desired;
+            Cam.transform.LookAt(ball + Vector3.up * 0.02f);
+            return;
+        }
+
         var fwd = _cue.AimDirection;
         if (fwd.sqrMagnitude < 0.01f)
         {

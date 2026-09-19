@@ -34,22 +34,25 @@ public sealed class Table : MonoBehaviour
         BuildFrame(hx, hz, rail, look);
         BuildLegs(hx, hz, rail, look.Wood);
 
-        var gap = PoolConstants.PocketGap;
-        BuildCushion("Rail_PosX_Foot", new Vector3(hx + 0.027f, PoolConstants.CushionHeight * 0.5f, hz * 0.5f + 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
-        BuildCushion("Rail_PosX_Head", new Vector3(hx + 0.027f, PoolConstants.CushionHeight * 0.5f, -hz * 0.5f - 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
-        BuildCushion("Rail_NegX_Foot", new Vector3(-hx - 0.027f, PoolConstants.CushionHeight * 0.5f, hz * 0.5f + 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
-        BuildCushion("Rail_NegX_Head", new Vector3(-hx - 0.027f, PoolConstants.CushionHeight * 0.5f, -hz * 0.5f - 0.02f), new Vector3(0.055f, PoolConstants.CushionHeight, hz - gap), cushion, look.Cushion);
-        BuildCushion("Rail_PosZ", new Vector3(0f, PoolConstants.CushionHeight * 0.5f, hz + 0.027f), new Vector3(width - gap, PoolConstants.CushionHeight, 0.055f), cushion, look.Cushion);
-        BuildCushion("Rail_NegZ", new Vector3(0f, PoolConstants.CushionHeight * 0.5f, -hz - 0.027f), new Vector3(width - gap, PoolConstants.CushionHeight, 0.055f), cushion, look.Cushion);
+        var sideMouth = PoolConstants.SidePocketRadius * 1.12f;
+        var cornerMouth = PoolConstants.CornerPocketRadius * 1.08f;
+        LongCushion("Rail_PosX_Foot", hx + 0.027f, sideMouth, hz - cornerMouth, cushion, look.Cushion);
+        LongCushion("Rail_PosX_Head", hx + 0.027f, -(hz - cornerMouth), -sideMouth, cushion, look.Cushion);
+        LongCushion("Rail_NegX_Foot", -hx - 0.027f, sideMouth, hz - cornerMouth, cushion, look.Cushion);
+        LongCushion("Rail_NegX_Head", -hx - 0.027f, -(hz - cornerMouth), -sideMouth, cushion, look.Cushion);
+        EndCushion("Rail_PosZ", hz + 0.027f, -(hx - cornerMouth), hx - cornerMouth, cushion, look.Cushion);
+        EndCushion("Rail_NegZ", -hz - 0.027f, -(hx - cornerMouth), hx - cornerMouth, cushion, look.Cushion);
 
+        var cout = PoolConstants.CornerPocketOut;
+        var sout = PoolConstants.SidePocketOut;
         Vector3[] pockets =
         {
-            new Vector3(-hx, 0f, -hz),
-            new Vector3(hx, 0f, -hz),
-            new Vector3(-hx, 0f, 0f),
-            new Vector3(hx, 0f, 0f),
-            new Vector3(-hx, 0f, hz),
-            new Vector3(hx, 0f, hz)
+            new Vector3(-hx - cout, 0f, -hz - cout),
+            new Vector3(hx + cout, 0f, -hz - cout),
+            new Vector3(-hx - sout, 0f, 0f),
+            new Vector3(hx + sout, 0f, 0f),
+            new Vector3(-hx - cout, 0f, hz + cout),
+            new Vector3(hx + cout, 0f, hz + cout)
         };
 
         for (var i = 0; i < pockets.Length; i++)
@@ -57,13 +60,13 @@ public sealed class Table : MonoBehaviour
             var side = Mathf.Abs(pockets[i].z) < 0.01f;
             var radius = side ? PoolConstants.SidePocketRadius : PoolConstants.CornerPocketRadius;
             PocketCenters[i] = pockets[i] + Vector3.up * 0.01f;
-            PocketRadii[i] = radius;
+            PocketRadii[i] = radius * 0.8f;
             var hole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             hole.name = $"Pocket_{i}";
             hole.transform.SetParent(transform, false);
             hole.transform.localPosition = PocketCenters[i] + Vector3.down * 0.02f;
             hole.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            hole.transform.localScale = new Vector3(radius * 2.1f, 0.03f, radius * 2.1f);
+            hole.transform.localScale = new Vector3(radius * 1.85f, 0.03f, radius * 1.85f);
             hole.GetComponent<MeshRenderer>().sharedMaterial = look.Pocket;
             DestroyCollider(hole);
 
@@ -73,7 +76,7 @@ public sealed class Table : MonoBehaviour
             triggerGo.transform.localScale = Vector3.one;
             var trigger = triggerGo.AddComponent<SphereCollider>();
             trigger.isTrigger = true;
-            trigger.radius = radius * 0.92f;
+            trigger.radius = radius * 0.72f;
             trigger.contactOffset = 0.0008f;
             var pocket = triggerGo.AddComponent<PocketTrigger>();
             pocket.Index = i;
@@ -82,7 +85,7 @@ public sealed class Table : MonoBehaviour
             rim.name = $"PocketRim_{i}";
             rim.transform.SetParent(transform, false);
             rim.transform.localPosition = PocketCenters[i] + Vector3.up * 0.012f;
-            rim.transform.localScale = new Vector3(radius * 2.35f, 0.008f, radius * 2.35f);
+            rim.transform.localScale = new Vector3(radius * 2.15f, 0.008f, radius * 2.15f);
             rim.GetComponent<MeshRenderer>().sharedMaterial = look.Brass;
             DestroyCollider(rim);
         }
@@ -206,6 +209,18 @@ public sealed class Table : MonoBehaviour
         }
     }
 
+    void LongCushion(string name, float x, float zMin, float zMax, PhysicsMaterial cushion, Material mat)
+    {
+        BuildCushion(name, new Vector3(x, PoolConstants.CushionHeight * 0.5f, (zMin + zMax) * 0.5f),
+            new Vector3(0.055f, PoolConstants.CushionHeight, Mathf.Abs(zMax - zMin)), cushion, mat);
+    }
+
+    void EndCushion(string name, float z, float xMin, float xMax, PhysicsMaterial cushion, Material mat)
+    {
+        BuildCushion(name, new Vector3((xMin + xMax) * 0.5f, PoolConstants.CushionHeight * 0.5f, z),
+            new Vector3(Mathf.Abs(xMax - xMin), PoolConstants.CushionHeight, 0.055f), cushion, mat);
+    }
+
     void BuildCushion(string name, Vector3 pos, Vector3 scale, PhysicsMaterial cushion, Material mat)
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -242,14 +257,52 @@ public sealed class Table : MonoBehaviour
 
     public Vector3 ClampOnCloth(Vector3 worldPos, bool kitchenOnly)
     {
-        var hx = PoolConstants.PlayingWidth * 0.5f - PoolConstants.BallRadius * 1.2f;
-        var hz = PoolConstants.PlayingLength * 0.5f - PoolConstants.BallRadius * 1.2f;
+        worldPos = ClampBounds(worldPos, kitchenOnly);
+        worldPos = PushOutOfPockets(worldPos);
+        return ClampBounds(worldPos, kitchenOnly);
+    }
+
+    Vector3 ClampBounds(Vector3 worldPos, bool kitchenOnly)
+    {
+        var hx = PoolConstants.PlayingWidth * 0.5f - PoolConstants.BallRadius * 1.35f;
+        var hz = PoolConstants.PlayingLength * 0.5f - PoolConstants.BallRadius * 1.35f;
         worldPos.x = Mathf.Clamp(worldPos.x, -hx, hx);
         worldPos.z = Mathf.Clamp(worldPos.z, -hz, hz);
         worldPos.y = PoolConstants.BallRadius;
         if (kitchenOnly)
         {
             worldPos.z = Mathf.Min(worldPos.z, PoolConstants.HeadStringZ);
+        }
+
+        return worldPos;
+    }
+
+    public Vector3 PushOutOfPockets(Vector3 worldPos)
+    {
+        if (PocketCenters == null)
+        {
+            return worldPos;
+        }
+
+        for (var i = 0; i < PocketCenters.Length; i++)
+        {
+            var flat = worldPos - PocketCenters[i];
+            flat.y = 0f;
+            var need = PocketRadii[i] + PoolConstants.BallRadius * 1.45f;
+            var dist = flat.magnitude;
+            if (dist < need)
+            {
+                var dir = dist > 0.0001f ? flat / dist : (Vector3.zero - PocketCenters[i]);
+                dir.y = 0f;
+                if (dir.sqrMagnitude < 0.0001f)
+                {
+                    dir = Vector3.back;
+                }
+
+                dir.Normalize();
+                worldPos += dir * (need - dist + 0.004f);
+                worldPos.y = PoolConstants.BallRadius;
+            }
         }
 
         return worldPos;
