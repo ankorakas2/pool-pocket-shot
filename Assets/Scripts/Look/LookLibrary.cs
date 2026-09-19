@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public static class LookLibrary
+public sealed class LookLibrary
 {
     public Material Lit;
     public Material Felt;
