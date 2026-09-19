@@ -47,7 +47,7 @@ public sealed class GameBootstrap : MonoBehaviour
         Physics.defaultSolverVelocityIterations = 12;
         Physics.defaultContactOffset = 0.0008f;
         Physics.defaultMaxDepenetrationVelocity = 0.45f;
-        Physics.bounceThreshold = 0.01f;
+        Physics.bounceThreshold = 0.08f;
         Time.fixedDeltaTime = 0.01f;
     }
 
@@ -59,7 +59,7 @@ public sealed class GameBootstrap : MonoBehaviour
         {
             dynamicFriction = 0.1f,
             staticFriction = 0.12f,
-            bounciness = 0.02f,
+            bounciness = 0f,
             frictionCombine = PhysicsMaterialCombine.Average,
             bounceCombine = PhysicsMaterialCombine.Minimum
         };

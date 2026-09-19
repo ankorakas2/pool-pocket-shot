@@ -5,14 +5,8 @@ public sealed class CushionBounce : MonoBehaviour
     const float DeadSpeed = 0.028f;
     const float PhysxHandlesAbove = 0.42f;
     const float Restitution = 0.8f;
-    const float MinRebound = 0.09f;
 
     void OnCollisionEnter(Collision collision)
-    {
-        Kick(collision);
-    }
-
-    void OnCollisionStay(Collision collision)
     {
         Kick(collision);
     }
@@ -64,10 +58,10 @@ public sealed class CushionBounce : MonoBehaviour
             return;
         }
 
-        var tangent = v - n * into;
-        var bounce = Mathf.Max(MinRebound, approach * Restitution);
+        var tangent = new Vector3(v.x, 0f, v.z) - n * into;
+        var bounce = Mathf.Max(0.05f, approach * Restitution);
         var next = tangent * 0.94f + n * bounce;
-        next.y = v.y;
+        next.y = 0f;
         body.WakeUp();
         RbUtil.SetLinear(body, next);
     }

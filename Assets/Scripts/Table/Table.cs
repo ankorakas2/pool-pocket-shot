@@ -226,6 +226,8 @@ public sealed class Table : MonoBehaviour
         var col = go.GetComponent<BoxCollider>();
         col.sharedMaterial = cushion;
         col.contactOffset = 0.0008f;
+        col.size = new Vector3(1f, 2.2f, 1f);
+        col.center = new Vector3(0f, 0.12f, 0f);
         go.AddComponent<CushionBounce>();
         go.GetComponent<MeshRenderer>().sharedMaterial = mat;
     }
@@ -235,22 +237,23 @@ public sealed class Table : MonoBehaviour
         PocketCenters[index] = pos + Vector3.up * 0.008f;
         PocketRadii[index] = radius * 0.82f;
 
-        var mouth = side ? 0.07f : 0.076f;
+        PocketMouthRange(pos, side, out var start, out var end);
+        var mouth = side ? 0.078f : 0.084f;
         var depth = 0.12f;
-        var segs = 28;
+        var segs = side ? 16 : 10;
         var root = new GameObject($"Pocket_{index}");
         root.transform.SetParent(transform, false);
         root.transform.localPosition = pos;
 
-        Visual("HoleMouth", root.transform, PocketMesh.Disc(mouth, segs, true), look.Hole,
+        Visual("HoleMouth", root.transform, PocketMesh.Sector(mouth, start, end, segs, true), look.Hole,
             new Vector3(0f, 0.002f, 0f), Quaternion.identity, false);
-        Visual("HoleFloor", root.transform, PocketMesh.Disc(mouth * 0.98f, segs, true), look.Hole,
+        Visual("HoleFloor", root.transform, PocketMesh.Sector(mouth * 0.98f, start, end, segs, true), look.Hole,
             new Vector3(0f, -depth, 0f), Quaternion.identity, false);
-        Visual("LeatherWall", root.transform, PocketMesh.Tube(mouth, depth, segs), look.Leather,
+        Visual("LeatherWall", root.transform, PocketMesh.ArcTube(mouth, depth, start, end, segs), look.Leather,
             new Vector3(0f, 0.002f, 0f), Quaternion.identity, true);
-        Visual("LeatherLip", root.transform, PocketMesh.Ring(mouth * 0.96f, mouth * 1.18f, segs), look.Leather,
+        Visual("LeatherLip", root.transform, PocketMesh.ArcRing(mouth * 0.96f, mouth * 1.18f, start, end, segs), look.Leather,
             new Vector3(0f, 0.006f, 0f), Quaternion.identity, true);
-        Visual("MetalRim", root.transform, PocketMesh.Ring(mouth * 1.14f, mouth * 1.34f, segs), look.PocketRim,
+        Visual("MetalRim", root.transform, PocketMesh.ArcRing(mouth * 1.14f, mouth * 1.34f, start, end, segs), look.PocketRim,
             new Vector3(0f, 0.011f, 0f), Quaternion.identity, true);
 
         Vector3 outward;
@@ -281,6 +284,52 @@ public sealed class Table : MonoBehaviour
         trigger.contactOffset = 0.0008f;
         var pocket = triggerGo.AddComponent<PocketTrigger>();
         pocket.Index = index;
+    }
+
+    static void PocketMouthRange(Vector3 pos, bool side, out float start, out float end)
+    {
+        const float extra = 0.14f;
+        if (side)
+        {
+            if (pos.x > 0f)
+            {
+                start = Mathf.PI * 0.5f - extra;
+                end = Mathf.PI * 1.5f + extra;
+            }
+            else
+            {
+                start = -Mathf.PI * 0.5f - extra;
+                end = Mathf.PI * 0.5f + extra;
+            }
+
+            return;
+        }
+
+        var sx = Mathf.Sign(pos.x);
+        var sz = Mathf.Sign(pos.z);
+        if (sx > 0f && sz > 0f)
+        {
+            start = Mathf.PI;
+            end = Mathf.PI * 1.5f;
+        }
+        else if (sx > 0f && sz < 0f)
+        {
+            start = Mathf.PI * 0.5f;
+            end = Mathf.PI;
+        }
+        else if (sx < 0f && sz > 0f)
+        {
+            start = Mathf.PI * 1.5f;
+            end = Mathf.PI * 2f;
+        }
+        else
+        {
+            start = 0f;
+            end = Mathf.PI * 0.5f;
+        }
+
+        start -= extra;
+        end += extra;
     }
 
     static void Visual(string name, Transform parent, Mesh mesh, Material mat, Vector3 localPos, Quaternion localRot, bool castShadows)

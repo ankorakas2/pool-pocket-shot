@@ -21,6 +21,7 @@ public static class BallFactory
         rb.maxAngularVelocity = 140f;
         rb.sleepThreshold = 0.005f;
         rb.maxDepenetrationVelocity = 0.45f;
+        rb.constraints = RigidbodyConstraints.FreezePositionY;
         var ball = go.AddComponent<Ball>();
         ball.Setup(number, look.Ball(number), ballPhysic);
         rb.isKinematic = true;
