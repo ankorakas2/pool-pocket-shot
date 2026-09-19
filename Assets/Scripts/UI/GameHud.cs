@@ -27,18 +27,20 @@ public sealed class GameHud : MonoBehaviour
         _cue = cue;
         _look = look;
         var canvasGo = new GameObject("Canvas");
-        canvasGo.transform.SetParent(transform, false);
         _canvas = canvasGo.AddComponent<Canvas>();
         _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        _canvas.sortingOrder = 100;
         var scaler = canvasGo.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
         scaler.matchWidthOrHeight = 0.5f;
         canvasGo.AddComponent<GraphicRaycaster>();
+        DontDestroyOnLoad(canvasGo);
 
         var es = new GameObject("EventSystem");
         es.AddComponent<EventSystem>();
         es.AddComponent<StandaloneInputModule>();
+        DontDestroyOnLoad(es);
 
         _menu = BuildMenu();
         _play = BuildPlay();
@@ -64,28 +66,51 @@ public sealed class GameHud : MonoBehaviour
 
     GameObject BuildPlay()
     {
-        var root = new GameObject("PlayHud");
+        var root = new GameObject("PlayHud", typeof(RectTransform));
         root.transform.SetParent(_canvas.transform, false);
         StretchOn(root);
 
-        var bar = ImageGo(root.transform, "TopBar", _look.UiPanel, new Vector2(0, 470), new Vector2(1840, 110), new Color(1, 1, 1, 0.88f));
+        var bar = ImageGo(root.transform, "TopBar", _look.UiPanel, Vector2.zero, new Vector2(1840, 110), new Color(1, 1, 1, 0.88f));
+        var barRt = bar.GetComponent<RectTransform>();
+        barRt.anchorMin = new Vector2(0.5f, 1f);
+        barRt.anchorMax = new Vector2(0.5f, 1f);
+        barRt.pivot = new Vector2(0.5f, 1f);
+        barRt.anchoredPosition = new Vector2(0f, -16f);
         _who = Label(bar.transform, "Player 1", 32, new Vector2(-620, 12), new Vector2(600, 44), TextAnchor.MiddleLeft, new Color(0.95f, 0.86f, 0.45f));
         _status = Label(bar.transform, "Open table", 24, new Vector2(-620, -22), new Vector2(700, 36), TextAnchor.MiddleLeft, new Color(0.82f, 0.88f, 0.8f));
-        _extra = Label(root.transform, "", 24, new Vector2(0, 360), new Vector2(1000, 40), TextAnchor.MiddleCenter, Color.white);
+        _extra = Label(root.transform, "", 24, new Vector2(0, 120), new Vector2(1000, 40), TextAnchor.MiddleCenter, Color.white);
 
-        var shoot = MenuBtn(root.transform, "SHOOT", new Vector2(760, -430), () => _flow.Shoot());
-        shoot.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 110);
+        var shoot = MenuBtn(root.transform, "SHOOT", Vector2.zero, () => _flow.Shoot());
+        var shootRt = shoot.GetComponent<RectTransform>();
+        shootRt.anchorMin = new Vector2(1f, 0f);
+        shootRt.anchorMax = new Vector2(1f, 0f);
+        shootRt.pivot = new Vector2(1f, 0f);
+        shootRt.anchoredPosition = new Vector2(-36f, 36f);
+        shootRt.sizeDelta = new Vector2(280, 110);
 
-        _placeBtn = MenuBtn(root.transform, "PLACE CUE", new Vector2(760, -300), () => _flow.ConfirmPlacement());
+        _placeBtn = MenuBtn(root.transform, "PLACE CUE", Vector2.zero, () => _flow.ConfirmPlacement());
+        var placeRt = _placeBtn.GetComponent<RectTransform>();
+        placeRt.anchorMin = new Vector2(1f, 0f);
+        placeRt.anchorMax = new Vector2(1f, 0f);
+        placeRt.pivot = new Vector2(1f, 0f);
+        placeRt.anchoredPosition = new Vector2(-36f, 160f);
         _placeBtn.SetActive(false);
 
-        MenuBtn(root.transform, "Menu", new Vector2(820, 470), () => _flow.ReturnToMenu()).GetComponent<RectTransform>().sizeDelta = new Vector2(180, 64);
+        var menuBtn = MenuBtn(root.transform, "Menu", Vector2.zero, () => _flow.ReturnToMenu());
+        var menuRt = menuBtn.GetComponent<RectTransform>();
+        menuRt.anchorMin = new Vector2(1f, 1f);
+        menuRt.anchorMax = new Vector2(1f, 1f);
+        menuRt.pivot = new Vector2(1f, 1f);
+        menuRt.anchoredPosition = new Vector2(-24f, -24f);
+        menuRt.sizeDelta = new Vector2(180, 64);
 
-        Label(root.transform, "POWER", 18, new Vector2(-760, -330), new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
-        var sliderGo = new GameObject("Power");
+        var sliderGo = new GameObject("Power", typeof(RectTransform));
         sliderGo.transform.SetParent(root.transform, false);
-        var srt = sliderGo.AddComponent<RectTransform>();
-        srt.anchoredPosition = new Vector2(-520, -430);
+        var srt = sliderGo.GetComponent<RectTransform>();
+        srt.anchorMin = new Vector2(0f, 0f);
+        srt.anchorMax = new Vector2(0f, 0f);
+        srt.pivot = new Vector2(0f, 0f);
+        srt.anchoredPosition = new Vector2(40f, 40f);
         srt.sizeDelta = new Vector2(520, 70);
         var bg = sliderGo.AddComponent<Image>();
         bg.color = new Color(0.15f, 0.15f, 0.18f, 0.9f);
@@ -93,9 +118,9 @@ public sealed class GameHud : MonoBehaviour
         _power.minValue = 0.05f;
         _power.maxValue = 1f;
         _power.value = 0.5f;
-        var fill = new GameObject("Fill");
+        var fill = new GameObject("Fill", typeof(RectTransform));
         fill.transform.SetParent(sliderGo.transform, false);
-        var fr = fill.AddComponent<RectTransform>();
+        var fr = fill.GetComponent<RectTransform>();
         fr.anchorMin = new Vector2(0, 0.2f);
         fr.anchorMax = new Vector2(1, 0.8f);
         fr.offsetMin = Vector2.zero;
@@ -106,15 +131,32 @@ public sealed class GameHud : MonoBehaviour
         _power.targetGraphic = bg;
         _power.onValueChanged.AddListener(v => _cue.Power = v);
 
-        Label(root.transform, "ENGLISH", 18, new Vector2(-760, -220), new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
-        var pad = ImageGo(root.transform, "SpinPad", _look.UiWhite, new Vector2(-760, -120), new Vector2(150, 150), new Color(0.92f, 0.92f, 0.9f, 0.95f));
+        var powerLbl = Label(root.transform, "POWER", 18, Vector2.zero, new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
+        var powerLblRt = powerLbl.GetComponent<RectTransform>();
+        powerLblRt.anchorMin = new Vector2(0f, 0f);
+        powerLblRt.anchorMax = new Vector2(0f, 0f);
+        powerLblRt.pivot = new Vector2(0f, 0f);
+        powerLblRt.anchoredPosition = new Vector2(40f, 118f);
+
+        var pad = ImageGo(root.transform, "SpinPad", _look.UiWhite, Vector2.zero, new Vector2(150, 150), new Color(0.92f, 0.92f, 0.9f, 0.95f));
         _spinPad = pad.GetComponent<RectTransform>();
+        _spinPad.anchorMin = new Vector2(0f, 0f);
+        _spinPad.anchorMax = new Vector2(0f, 0f);
+        _spinPad.pivot = new Vector2(0f, 0f);
+        _spinPad.anchoredPosition = new Vector2(40f, 170f);
         var knob = ImageGo(pad.transform, "Knob", _look.UiWhite, Vector2.zero, new Vector2(28, 28), new Color(0.75f, 0.12f, 0.12f));
         _spinKnob = knob.GetComponent<RectTransform>();
         var spin = pad.AddComponent<SpinPad>();
         spin.Pad = _spinPad;
         spin.Knob = _spinKnob;
         spin.OnChanged = v => _cue.English = v;
+
+        var engLbl = Label(root.transform, "ENGLISH", 18, Vector2.zero, new Vector2(200, 28), TextAnchor.MiddleLeft, new Color(0.9f, 0.82f, 0.45f));
+        var engRt = engLbl.GetComponent<RectTransform>();
+        engRt.anchorMin = new Vector2(0f, 0f);
+        engRt.anchorMax = new Vector2(0f, 0f);
+        engRt.pivot = new Vector2(0f, 0f);
+        engRt.anchoredPosition = new Vector2(40f, 328f);
 
         return root;
     }
@@ -128,18 +170,49 @@ public sealed class GameHud : MonoBehaviour
         return root;
     }
 
+    void OnDestroy()
+    {
+        if (_canvas != null)
+        {
+            Destroy(_canvas.gameObject);
+        }
+    }
+
     public void ShowMenu()
     {
-        _menu.SetActive(true);
-        _play.SetActive(false);
-        _over.SetActive(false);
+        if (_menu != null)
+        {
+            _menu.SetActive(true);
+        }
+
+        if (_play != null)
+        {
+            _play.SetActive(false);
+        }
+
+        if (_over != null)
+        {
+            _over.SetActive(false);
+        }
     }
 
     public void ShowMatch()
     {
-        _menu.SetActive(false);
-        _play.SetActive(true);
-        _over.SetActive(false);
+        if (_menu != null)
+        {
+            _menu.SetActive(false);
+        }
+
+        if (_play != null)
+        {
+            _play.SetActive(true);
+        }
+
+        if (_over != null)
+        {
+            _over.SetActive(false);
+        }
+
         if (_power != null)
         {
             _power.value = _cue.Power;
@@ -197,15 +270,20 @@ public sealed class GameHud : MonoBehaviour
 
     static void StretchOn(GameObject go)
     {
-        var rt = go.GetComponent<RectTransform>() ?? go.AddComponent<RectTransform>();
+        var rt = go.GetComponent<RectTransform>();
+        if (rt == null)
+        {
+            rt = go.AddComponent<RectTransform>();
+        }
+
         StretchOnRt(rt);
     }
 
     Text Label(Transform parent, string text, int size, Vector2 pos, Vector2 sizeDelta, TextAnchor anchor = TextAnchor.MiddleCenter, Color? color = null)
     {
-        var go = new GameObject("Label");
+        var go = new GameObject("Label", typeof(RectTransform));
         go.transform.SetParent(parent, false);
-        var rt = go.AddComponent<RectTransform>();
+        var rt = go.GetComponent<RectTransform>();
         rt.anchoredPosition = pos;
         rt.sizeDelta = sizeDelta;
         var t = go.AddComponent<Text>();
@@ -216,6 +294,7 @@ public sealed class GameHud : MonoBehaviour
         t.text = text;
         t.horizontalOverflow = HorizontalWrapMode.Overflow;
         t.fontStyle = FontStyle.Bold;
+        t.raycastTarget = false;
         return t;
     }
 
@@ -233,9 +312,9 @@ public sealed class GameHud : MonoBehaviour
 
     GameObject ImageGo(Transform parent, string name, Sprite sprite, Vector2 pos, Vector2 size, Color color)
     {
-        var go = new GameObject(name);
+        var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
-        var rt = go.AddComponent<RectTransform>();
+        var rt = go.GetComponent<RectTransform>();
         rt.anchoredPosition = pos;
         rt.sizeDelta = size;
         var img = go.AddComponent<Image>();
@@ -253,7 +332,8 @@ public sealed class GameHud : MonoBehaviour
     static Font UiFont()
     {
         return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
-               ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+               ?? Resources.GetBuiltinResource<Font>("Arial.ttf")
+               ?? Font.CreateDynamicFontFromOSFont(new[] { "Segoe UI", "Arial" }, 16);
     }
 }
 

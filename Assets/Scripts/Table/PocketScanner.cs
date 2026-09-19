@@ -29,6 +29,11 @@ public sealed class PocketScanner : MonoBehaviour
             }
 
             var p = ball.transform.position;
+            if (p.y > PoolConstants.BallRadius * 2.2f)
+            {
+                continue;
+            }
+
             for (var k = 0; k < _table.PocketCenters.Length; k++)
             {
                 var d = p - _table.PocketCenters[k];

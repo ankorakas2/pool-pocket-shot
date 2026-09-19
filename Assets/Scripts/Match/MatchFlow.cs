@@ -27,6 +27,7 @@ public sealed class MatchFlow : MonoBehaviour
     PoolAi _ai;
     GameHud _hud;
     PoolAudio _audio;
+    CameraRig _rig;
 
     public void Wire(Ball[] balls, Table table, CueController cueCtl, ShotResolver resolver, PhysicsSettledDetector settled, PoolAi ai, GameHud hud, PoolAudio audio)
     {
@@ -39,6 +40,7 @@ public sealed class MatchFlow : MonoBehaviour
         _ai = ai;
         _hud = hud;
         _audio = audio;
+        _rig = GetComponent<CameraRig>();
     }
 
     public void StartMatch(GameModeKind kind, bool vsAi, int difficulty)
@@ -64,9 +66,11 @@ public sealed class MatchFlow : MonoBehaviour
         _cueCtl.PlacingCue = false;
         _cueCtl.InputLocked = false;
         _cueCtl.SetVisible(true);
+        _resolver.IgnorePocketsFor(0.45f);
         State = MatchState.Aiming;
+        _rig?.SetAimView(true);
         _hud.ShowMatch();
-        RefreshHud("Your shot");
+        RefreshHud("Drag to aim  ·  Space or SHOOT");
         _audio.PlayClick();
     }
 
@@ -111,6 +115,12 @@ public sealed class MatchFlow : MonoBehaviour
 
     void Update()
     {
+        if (State == MatchState.Aiming && !_cueCtl.InputLocked &&
+            (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)))
+        {
+            Shoot();
+        }
+
         if (State == MatchState.Simulating)
         {
             _settled.Tick(Time.deltaTime);
@@ -213,6 +223,7 @@ public sealed class MatchFlow : MonoBehaviour
         State = MatchState.Menu;
         _cueCtl.SetVisible(false);
         _cueCtl.InputLocked = true;
+        _rig?.SetAimView(false);
         CancelInvoke();
         _hud.ShowMenu();
     }

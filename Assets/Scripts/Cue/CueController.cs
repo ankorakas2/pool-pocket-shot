@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public sealed class CueController : MonoBehaviour
 {
@@ -189,6 +190,7 @@ public sealed class CueController : MonoBehaviour
         var point = _cue.transform.position - dir * PoolConstants.BallRadius
                     + right * English.x * PoolConstants.BallRadius * 0.7f
                     + up * English.y * PoolConstants.BallRadius * 0.7f;
+        _cue.Body.isKinematic = false;
         _cue.Body.WakeUp();
         _cue.Body.AddForceAtPosition(dir * impulse, point, ForceMode.Impulse);
         _anim = 0.12f;
@@ -199,6 +201,8 @@ public sealed class CueController : MonoBehaviour
         _anim = Mathf.MoveTowards(_anim, 0f, Time.deltaTime * 0.8f);
     }
 
+    static readonly System.Collections.Generic.List<RaycastResult> RaycastHits = new System.Collections.Generic.List<RaycastResult>();
+
     static bool OverUi()
     {
         if (EventSystem.current == null)
@@ -206,12 +210,20 @@ public sealed class CueController : MonoBehaviour
             return false;
         }
 
-        if (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId))
+        var pos = Input.touchCount > 0 ? (Vector2)Input.GetTouch(0).position : (Vector2)Input.mousePosition;
+        var data = new PointerEventData(EventSystem.current) { position = pos };
+        RaycastHits.Clear();
+        EventSystem.current.RaycastAll(data, RaycastHits);
+        for (var i = 0; i < RaycastHits.Count; i++)
         {
-            return true;
+            var go = RaycastHits[i].gameObject;
+            if (go.GetComponent<Button>() != null || go.GetComponent<Slider>() != null || go.GetComponent<SpinPad>() != null)
+            {
+                return true;
+            }
         }
 
-        return EventSystem.current.IsPointerOverGameObject();
+        return false;
     }
 
     static bool PointerDown(out Vector3 screen)

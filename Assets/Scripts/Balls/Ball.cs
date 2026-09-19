@@ -29,6 +29,7 @@ public sealed class Ball : MonoBehaviour
         var col = GetComponent<SphereCollider>();
         col.sharedMaterial = physic;
         col.radius = 0.5f;
+        col.contactOffset = 0.0008f;
         var renderer = GetComponent<MeshRenderer>();
         renderer.sharedMaterial = material;
         gameObject.name = number == 0 ? "CueBall" : $"Ball_{number}";
@@ -44,12 +45,7 @@ public sealed class Ball : MonoBehaviour
     public void RespawnOnTable(Vector3 worldPos)
     {
         Pocketed = false;
-        gameObject.SetActive(true);
-        Body.isKinematic = false;
-        transform.position = worldPos;
-        transform.rotation = Quaternion.identity;
-        RbUtil.SleepHard(Body);
-        Body.WakeUp();
+        PlaceAt(worldPos);
     }
 
     public void RestoreRack()
@@ -61,10 +57,32 @@ public sealed class Ball : MonoBehaviour
     public void PlaceAndFreeze(Vector3 worldPos)
     {
         Pocketed = false;
+        PlaceAt(worldPos);
+    }
+
+    void PlaceAt(Vector3 worldPos)
+    {
+        if (Body != null)
+        {
+            Body.isKinematic = true;
+            RbUtil.SetLinear(Body, Vector3.zero);
+            Body.angularVelocity = Vector3.zero;
+        }
+
         gameObject.SetActive(true);
-        transform.position = worldPos;
-        Body.isKinematic = false;
-        RbUtil.SleepHard(Body);
+        transform.SetPositionAndRotation(worldPos, Quaternion.identity);
+        if (Body != null)
+        {
+            Body.position = worldPos;
+            Body.rotation = Quaternion.identity;
+        }
+
+        Physics.SyncTransforms();
+        if (Body != null)
+        {
+            Body.isKinematic = false;
+            RbUtil.SleepHard(Body);
+        }
     }
 
     public void MarkPocketed(int pocketIndex)

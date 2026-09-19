@@ -8,7 +8,7 @@ Working title — we can change the final name later.
 
 1. Install **Unity Hub** (free). A copy is also installed via `Tools/Install-UnityHub.ps1`.
 2. In Hub, create a **Personal** account. Do not choose Pro.
-3. Install **Unity 6 LTS (6000.0)** with modules:
+3. Install **Unity 6 LTS (6000.3.24f1)** with modules:
    - Android Build Support
    - OpenJDK
    - Android SDK & NDK Tools

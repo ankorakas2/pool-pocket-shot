@@ -17,11 +17,14 @@ public static class BallFactory
         rb.angularDrag = 0.55f;
 #endif
         rb.interpolation = RigidbodyInterpolation.Interpolate;
-        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.maxAngularVelocity = 40f;
-        rb.sleepThreshold = 0.01f;
+        rb.sleepThreshold = 0.005f;
+        rb.maxDepenetrationVelocity = 0.45f;
         var ball = go.AddComponent<Ball>();
         ball.Setup(number, look.Ball(number), ballPhysic);
+        rb.isKinematic = true;
+        go.SetActive(false);
         return ball;
     }
 
@@ -40,7 +43,7 @@ public static class BallFactory
         cue.RespawnOnTable(PoolConstants.HeadSpot);
 
         var apex = PoolConstants.FootSpot;
-        var d = PoolConstants.BallDiameter * 1.02f;
+        var d = PoolConstants.BallDiameter * 1.06f;
         var rows = new[]
         {
             new[] { 1 },
@@ -79,7 +82,7 @@ public static class BallFactory
         balls[0].RespawnOnTable(PoolConstants.HeadSpot);
 
         var apex = PoolConstants.FootSpot;
-        var d = PoolConstants.BallDiameter * 1.02f;
+        var d = PoolConstants.BallDiameter * 1.06f;
         int[][] diamond =
         {
             new[] { 1 },

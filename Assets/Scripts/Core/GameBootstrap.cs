@@ -43,8 +43,11 @@ public sealed class GameBootstrap : MonoBehaviour
         Screen.autorotateToPortraitUpsideDown = false;
         Screen.autorotateToLandscapeLeft = true;
         Screen.autorotateToLandscapeRight = true;
-        Physics.defaultSolverIterations = 12;
+        Physics.defaultSolverIterations = 16;
         Physics.defaultSolverVelocityIterations = 12;
+        Physics.defaultContactOffset = 0.0008f;
+        Physics.defaultMaxDepenetrationVelocity = 0.45f;
+        Physics.bounceThreshold = 0.2f;
         Time.fixedDeltaTime = 0.01f;
     }
 
@@ -133,6 +136,7 @@ public sealed class GameBootstrap : MonoBehaviour
 
         var cueCtl = gameObject.AddComponent<CueController>();
         cueCtl.Bind(balls[0], table, rig.Cam, look);
+        rig.Bind(balls[0], cueCtl);
         cueCtl.SetVisible(false);
         cueCtl.InputLocked = true;
 

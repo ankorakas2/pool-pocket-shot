@@ -40,7 +40,7 @@ public sealed class LookLibrary
         look.CueWood = look.Make(new Color(1f, 0.92f, 0.78f), 0.42f, 0f, woodA ?? WoodTex(), woodN, new Vector2(2f, 8f));
         look.CueButt = look.Make(new Color(0.35f, 0.18f, 0.08f), 0.3f, 0f, woodA ?? WoodTex(), woodN, new Vector2(1f, 4f));
         look.Ferrule = look.Make(new Color(0.92f, 0.92f, 0.9f), 0.7f, 0.25f, metalA, metalN);
-        look.Tip = look.Make(new Color(0.15f, 0.35f, 0.7f), 0.2f, 0f, fabricN);
+        look.Tip = look.Make(new Color(0.15f, 0.35f, 0.7f), 0.2f, 0f, null, fabricN);
         look.Diamond = look.Make(new Color(0.95f, 0.9f, 0.75f), 0.8f, 0.2f, metalA, metalN);
         look.UiPanel = RoundSprite(64, 64, 10, new Color(0.04f, 0.07f, 0.06f, 0.94f));
         look.UiButton = RoundSprite(64, 64, 12, new Color(0.1f, 0.38f, 0.22f, 1f));
@@ -186,6 +186,7 @@ public sealed class LookLibrary
         t.wrapMode = TextureWrapMode.Repeat;
         Color baseColor;
         var stripe = number >= 9;
+        var stripeColor = Color.white;
         if (number == 0)
         {
             baseColor = new Color(0.96f, 0.96f, 0.94f);
@@ -200,7 +201,8 @@ public sealed class LookLibrary
         }
         else
         {
-            baseColor = Palette[number - 8];
+            baseColor = Color.white;
+            stripeColor = Palette[number - 8];
         }
 
         var pixels = new Color[w * h];
@@ -212,7 +214,7 @@ public sealed class LookLibrary
                 var c = baseColor;
                 if (stripe && v > 0.36f && v < 0.64f)
                 {
-                    c = Color.white;
+                    c = stripeColor;
                 }
 
                 if (number == 0)

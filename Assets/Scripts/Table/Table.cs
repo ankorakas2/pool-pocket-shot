@@ -29,6 +29,7 @@ public sealed class Table : MonoBehaviour
         var feltCol = felt.AddComponent<BoxCollider>();
         feltCol.sharedMaterial = cloth;
         feltCol.size = Vector3.one;
+        feltCol.contactOffset = 0.0008f;
 
         BuildFrame(hx, hz, rail, look);
         BuildLegs(hx, hz, rail, look.Wood);
@@ -65,10 +66,16 @@ public sealed class Table : MonoBehaviour
             hole.transform.localScale = new Vector3(radius * 2.1f, 0.03f, radius * 2.1f);
             hole.GetComponent<MeshRenderer>().sharedMaterial = look.Pocket;
             DestroyCollider(hole);
-            var trigger = hole.AddComponent<SphereCollider>();
+
+            var triggerGo = new GameObject($"PocketTrigger_{i}");
+            triggerGo.transform.SetParent(transform, false);
+            triggerGo.transform.localPosition = PocketCenters[i];
+            triggerGo.transform.localScale = Vector3.one;
+            var trigger = triggerGo.AddComponent<SphereCollider>();
             trigger.isTrigger = true;
-            trigger.radius = 0.55f;
-            var pocket = hole.AddComponent<PocketTrigger>();
+            trigger.radius = radius * 0.92f;
+            trigger.contactOffset = 0.0008f;
+            var pocket = triggerGo.AddComponent<PocketTrigger>();
             pocket.Index = i;
 
             var rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -208,6 +215,7 @@ public sealed class Table : MonoBehaviour
         go.transform.localScale = scale;
         var col = go.GetComponent<BoxCollider>();
         col.sharedMaterial = cushion;
+        col.contactOffset = 0.0008f;
         go.GetComponent<MeshRenderer>().sharedMaterial = mat;
     }
 
