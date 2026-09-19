@@ -47,7 +47,7 @@ public sealed class GameBootstrap : MonoBehaviour
         Physics.defaultSolverVelocityIterations = 12;
         Physics.defaultContactOffset = 0.0008f;
         Physics.defaultMaxDepenetrationVelocity = 0.45f;
-        Physics.bounceThreshold = 0.2f;
+        Physics.bounceThreshold = 0.01f;
         Time.fixedDeltaTime = 0.01f;
     }
 
@@ -57,25 +57,25 @@ public sealed class GameBootstrap : MonoBehaviour
 
         var cloth = new PhysicsMaterial("Cloth")
         {
-            dynamicFriction = 0.2f,
-            staticFriction = 0.22f,
-            bounciness = 0.03f,
+            dynamicFriction = 0.1f,
+            staticFriction = 0.12f,
+            bounciness = 0.02f,
             frictionCombine = PhysicsMaterialCombine.Average,
             bounceCombine = PhysicsMaterialCombine.Minimum
         };
         var cushion = new PhysicsMaterial("Cushion")
         {
-            dynamicFriction = 0.18f,
-            staticFriction = 0.2f,
-            bounciness = 0.72f,
-            frictionCombine = PhysicsMaterialCombine.Average,
+            dynamicFriction = 0.04f,
+            staticFriction = 0.05f,
+            bounciness = 0.82f,
+            frictionCombine = PhysicsMaterialCombine.Minimum,
             bounceCombine = PhysicsMaterialCombine.Maximum
         };
         var ballPhys = new PhysicsMaterial("Ball")
         {
-            dynamicFriction = 0.06f,
-            staticFriction = 0.06f,
-            bounciness = 0.94f,
+            dynamicFriction = 0.05f,
+            staticFriction = 0.05f,
+            bounciness = 0.96f,
             frictionCombine = PhysicsMaterialCombine.Minimum,
             bounceCombine = PhysicsMaterialCombine.Maximum
         };
@@ -121,6 +121,7 @@ public sealed class GameBootstrap : MonoBehaviour
         spot.shadows = LightShadows.None;
         lamp.transform.position = new Vector3(0f, 2.15f, 0f);
         lamp.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        lamp.transform.SetParent(transform, true);
 
         var fill = new GameObject("FillLight");
         var fl = fill.AddComponent<Light>();

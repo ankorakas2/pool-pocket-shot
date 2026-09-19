@@ -189,13 +189,16 @@ public sealed class CueController : MonoBehaviour
         t *= t;
         var impulse = Mathf.Lerp(PoolConstants.MinShotImpulse, PoolConstants.MaxShotImpulse, t);
         var right = Vector3.Cross(Vector3.up, dir).normalized;
-        var up = Vector3.up;
-        var point = _cue.transform.position - dir * PoolConstants.BallRadius
-                    + right * English.x * PoolConstants.BallRadius * 0.7f
-                    + up * English.y * PoolConstants.BallRadius * 0.7f;
-        _cue.Body.isKinematic = false;
-        _cue.Body.WakeUp();
-        _cue.Body.AddForceAtPosition(dir * impulse, point, ForceMode.Impulse);
+        var body = _cue.Body;
+        var radius = PoolConstants.BallRadius;
+        var point = _cue.transform.position - dir * radius
+                    + right * English.x * radius * 0.92f
+                    + Vector3.up * English.y * radius * 0.92f;
+        body.isKinematic = false;
+        body.WakeUp();
+        body.AddForceAtPosition(dir * impulse, point, ForceMode.Impulse);
+        var spin = Mathf.Lerp(40f, 125f, impulse / PoolConstants.MaxShotImpulse);
+        body.angularVelocity += right * English.y * spin - Vector3.up * English.x * spin;
         _anim = 0.12f;
     }
 
@@ -220,7 +223,7 @@ public sealed class CueController : MonoBehaviour
         for (var i = 0; i < RaycastHits.Count; i++)
         {
             var go = RaycastHits[i].gameObject;
-            if (go.GetComponent<Button>() != null || go.GetComponent<Slider>() != null || go.GetComponent<SpinPad>() != null)
+            if (go.GetComponentInParent<Button>() != null || go.GetComponentInParent<Slider>() != null || go.GetComponentInParent<SpinPad>() != null)
             {
                 return true;
             }

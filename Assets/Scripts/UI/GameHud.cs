@@ -7,6 +7,7 @@ public sealed class GameHud : MonoBehaviour
     MatchFlow _flow;
     CueController _cue;
     Canvas _canvas;
+    GameObject _eventSystem;
     GameObject _menu;
     GameObject _play;
     GameObject _over;
@@ -38,10 +39,14 @@ public sealed class GameHud : MonoBehaviour
         canvasGo.AddComponent<GraphicRaycaster>();
         DontDestroyOnLoad(canvasGo);
 
-        var es = new GameObject("EventSystem");
-        es.AddComponent<EventSystem>();
-        es.AddComponent<StandaloneInputModule>();
-        DontDestroyOnLoad(es);
+        if (EventSystem.current == null)
+        {
+            var es = new GameObject("EventSystem");
+            es.AddComponent<EventSystem>();
+            es.AddComponent<StandaloneInputModule>();
+            DontDestroyOnLoad(es);
+            _eventSystem = es;
+        }
 
         _menu = BuildMenu();
         _play = BuildPlay();
@@ -185,6 +190,11 @@ public sealed class GameHud : MonoBehaviour
         if (_canvas != null)
         {
             Destroy(_canvas.gameObject);
+        }
+
+        if (_eventSystem != null)
+        {
+            Destroy(_eventSystem);
         }
     }
 

@@ -2,6 +2,11 @@ using UnityEngine;
 
 public sealed class CameraRig : MonoBehaviour
 {
+    const float AimBackMin = 0.38f;
+    const float AimBackMax = 2.35f;
+    const float OverviewZoomMin = 1.8f;
+    const float OverviewZoomMax = 6.5f;
+
     public Transform Pivot;
     public Camera Cam;
 
@@ -11,6 +16,7 @@ public sealed class CameraRig : MonoBehaviour
     Vector3 _pan;
     float _lastPinch;
     float _overviewZoom = 4.35f;
+    float _aimBack = 1.05f;
 
     public void Build()
     {
@@ -21,7 +27,7 @@ public sealed class CameraRig : MonoBehaviour
         camGo.tag = "MainCamera";
         camGo.transform.SetParent(Pivot, false);
         Cam = camGo.AddComponent<Camera>();
-        Cam.nearClipPlane = 0.04f;
+        Cam.nearClipPlane = 0.03f;
         Cam.farClipPlane = 40f;
         Cam.fieldOfView = 52f;
         Cam.clearFlags = CameraClearFlags.SolidColor;
@@ -68,33 +74,36 @@ public sealed class CameraRig : MonoBehaviour
 
     void LateUpdate()
     {
+        HandleZoom();
         if (_aimView && _cue != null && _cueBall != null && (_cue.PlacingCue || _cueBall.isActiveAndEnabled))
         {
             ApplyAimView();
             return;
         }
 
-        HandleOverviewInput();
+        HandleOverviewPan();
         ApplyOverview();
     }
 
-    void HandleOverviewInput()
+    void HandleZoom()
     {
         if (Input.touchCount == 2)
         {
-            var a = Input.GetTouch(0);
-            var b = Input.GetTouch(1);
-            var dist = Vector2.Distance(a.position, b.position);
+            var dist = Vector2.Distance(Input.GetTouch(0).position, Input.GetTouch(1).position);
             if (_lastPinch > 1f)
             {
-                _overviewZoom = Mathf.Clamp(_overviewZoom - (dist - _lastPinch) * 0.01f, 1.8f, 6.5f);
+                var delta = dist - _lastPinch;
+                if (_aimView)
+                {
+                    _aimBack = Mathf.Clamp(_aimBack - delta * 0.008f, AimBackMin, AimBackMax);
+                }
+                else
+                {
+                    _overviewZoom = Mathf.Clamp(_overviewZoom - delta * 0.01f, OverviewZoomMin, OverviewZoomMax);
+                }
             }
 
             _lastPinch = dist;
-            var mid = (a.deltaPosition + b.deltaPosition) * 0.5f;
-            _pan += new Vector3(-mid.x, 0f, -mid.y) * 0.0015f;
-            _pan.x = Mathf.Clamp(_pan.x, -0.8f, 0.8f);
-            _pan.z = Mathf.Clamp(_pan.z, -1.2f, 1.2f);
         }
         else
         {
@@ -104,8 +113,28 @@ public sealed class CameraRig : MonoBehaviour
         var scroll = Input.mouseScrollDelta.y;
         if (Mathf.Abs(scroll) > 0.01f)
         {
-            _overviewZoom = Mathf.Clamp(_overviewZoom - scroll * 0.2f, 1.8f, 6.5f);
+            if (_aimView)
+            {
+                _aimBack = Mathf.Clamp(_aimBack - scroll * 0.12f, AimBackMin, AimBackMax);
+            }
+            else
+            {
+                _overviewZoom = Mathf.Clamp(_overviewZoom - scroll * 0.2f, OverviewZoomMin, OverviewZoomMax);
+            }
         }
+    }
+
+    void HandleOverviewPan()
+    {
+        if (Input.touchCount != 2)
+        {
+            return;
+        }
+
+        var mid = (Input.GetTouch(0).deltaPosition + Input.GetTouch(1).deltaPosition) * 0.5f;
+        _pan += new Vector3(-mid.x, 0f, -mid.y) * 0.0015f;
+        _pan.x = Mathf.Clamp(_pan.x, -0.8f, 0.8f);
+        _pan.z = Mathf.Clamp(_pan.z, -1.2f, 1.2f);
     }
 
     void ApplyOverview()
@@ -116,6 +145,7 @@ public sealed class CameraRig : MonoBehaviour
         }
 
         Cam.fieldOfView = 40f;
+        Cam.nearClipPlane = 0.04f;
         Pivot.position = _pan + Vector3.up * 0.05f;
         Pivot.rotation = Quaternion.Euler(0f, 18f, 0f);
         Cam.transform.localPosition = Quaternion.Euler(58f, 0f, 0f) * new Vector3(0f, 0f, -_overviewZoom);
@@ -125,11 +155,13 @@ public sealed class CameraRig : MonoBehaviour
     void ApplyAimView()
     {
         var ball = _cueBall.transform.position;
+        var zoomT = Mathf.InverseLerp(AimBackMin, AimBackMax, _aimBack);
         if (_cue.PlacingCue)
         {
-            Cam.fieldOfView = 48f;
-            var desired = ball + new Vector3(0.15f, 1.25f, -0.9f);
-            Cam.transform.position = desired;
+            Cam.fieldOfView = Mathf.Lerp(42f, 50f, zoomT);
+            Cam.nearClipPlane = 0.03f;
+            var placeCam = ball + new Vector3(0.12f, Mathf.Lerp(0.42f, 1.35f, zoomT), Mathf.Lerp(-0.32f, -1.05f, zoomT));
+            Cam.transform.position = placeCam;
             Cam.transform.LookAt(ball + Vector3.up * 0.02f);
             return;
         }
@@ -142,9 +174,12 @@ public sealed class CameraRig : MonoBehaviour
 
         fwd.y = 0f;
         fwd.Normalize();
-        var desired = ball - fwd * 1.12f + Vector3.up * 0.28f;
-        var lookAt = ball + fwd * 1.7f + Vector3.up * 0.04f;
-        Cam.fieldOfView = 54f;
+        var height = Mathf.Lerp(0.09f, 0.46f, zoomT);
+        var lookAhead = Mathf.Lerp(0.55f, 1.9f, zoomT);
+        var desired = ball - fwd * _aimBack + Vector3.up * height;
+        var lookAt = ball + fwd * lookAhead + Vector3.up * 0.03f;
+        Cam.fieldOfView = Mathf.Lerp(44f, 56f, zoomT);
+        Cam.nearClipPlane = Mathf.Lerp(0.02f, 0.05f, zoomT);
         Cam.transform.position = desired;
         Cam.transform.rotation = Quaternion.LookRotation(lookAt - desired, Vector3.up);
     }

@@ -34,8 +34,8 @@ public sealed class Table : MonoBehaviour
         BuildFrame(hx, hz, rail, look);
         BuildLegs(hx, hz, rail, look.Wood);
 
-        var sideMouth = PoolConstants.SidePocketRadius * 1.12f;
-        var cornerMouth = PoolConstants.CornerPocketRadius * 1.08f;
+        var sideMouth = 0.09f;
+        var cornerMouth = 0.094f;
         LongCushion("Rail_PosX_Foot", hx + 0.027f, sideMouth, hz - cornerMouth, cushion, look.Cushion);
         LongCushion("Rail_PosX_Head", hx + 0.027f, -(hz - cornerMouth), -sideMouth, cushion, look.Cushion);
         LongCushion("Rail_NegX_Foot", -hx - 0.027f, sideMouth, hz - cornerMouth, cushion, look.Cushion);
@@ -59,35 +59,7 @@ public sealed class Table : MonoBehaviour
         {
             var side = Mathf.Abs(pockets[i].z) < 0.01f;
             var radius = side ? PoolConstants.SidePocketRadius : PoolConstants.CornerPocketRadius;
-            PocketCenters[i] = pockets[i] + Vector3.up * 0.01f;
-            PocketRadii[i] = radius * 0.8f;
-            var hole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            hole.name = $"Pocket_{i}";
-            hole.transform.SetParent(transform, false);
-            hole.transform.localPosition = PocketCenters[i] + Vector3.down * 0.02f;
-            hole.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            hole.transform.localScale = new Vector3(radius * 1.85f, 0.03f, radius * 1.85f);
-            hole.GetComponent<MeshRenderer>().sharedMaterial = look.Pocket;
-            DestroyCollider(hole);
-
-            var triggerGo = new GameObject($"PocketTrigger_{i}");
-            triggerGo.transform.SetParent(transform, false);
-            triggerGo.transform.localPosition = PocketCenters[i];
-            triggerGo.transform.localScale = Vector3.one;
-            var trigger = triggerGo.AddComponent<SphereCollider>();
-            trigger.isTrigger = true;
-            trigger.radius = radius * 0.72f;
-            trigger.contactOffset = 0.0008f;
-            var pocket = triggerGo.AddComponent<PocketTrigger>();
-            pocket.Index = i;
-
-            var rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rim.name = $"PocketRim_{i}";
-            rim.transform.SetParent(transform, false);
-            rim.transform.localPosition = PocketCenters[i] + Vector3.up * 0.012f;
-            rim.transform.localScale = new Vector3(radius * 2.15f, 0.008f, radius * 2.15f);
-            rim.GetComponent<MeshRenderer>().sharedMaterial = look.Brass;
-            DestroyCollider(rim);
+            BuildPocket(i, pockets[i], side, radius, rail, look);
         }
 
         var kitchen = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -155,11 +127,19 @@ public sealed class Table : MonoBehaviour
             DestroyCollider(go);
         }
 
-        var h = 0.09f;
-        Wood("Wood_PosX", new Vector3(hx + rail * 0.5f, h * 0.5f, 0f), new Vector3(rail, h, PoolConstants.PlayingLength + rail * 2f));
-        Wood("Wood_NegX", new Vector3(-hx - rail * 0.5f, h * 0.5f, 0f), new Vector3(rail, h, PoolConstants.PlayingLength + rail * 2f));
-        Wood("Wood_PosZ", new Vector3(0f, h * 0.5f, hz + rail * 0.5f), new Vector3(PoolConstants.PlayingWidth + rail * 2f, h, rail));
-        Wood("Wood_NegZ", new Vector3(0f, h * 0.5f, -hz - rail * 0.5f), new Vector3(PoolConstants.PlayingWidth + rail * 2f, h, rail));
+        var h = 0.05f;
+        var cornerGap = 0.13f;
+        var sideGap = 0.1f;
+        var longLen = hz - cornerGap - sideGap;
+        var headZ = -(hz - cornerGap + sideGap) * 0.5f;
+        var footZ = (hz - cornerGap + sideGap) * 0.5f;
+        Wood("Wood_PosX_Head", new Vector3(hx + rail * 0.5f, h * 0.5f, headZ), new Vector3(rail, h, longLen));
+        Wood("Wood_PosX_Foot", new Vector3(hx + rail * 0.5f, h * 0.5f, footZ), new Vector3(rail, h, longLen));
+        Wood("Wood_NegX_Head", new Vector3(-hx - rail * 0.5f, h * 0.5f, headZ), new Vector3(rail, h, longLen));
+        Wood("Wood_NegX_Foot", new Vector3(-hx - rail * 0.5f, h * 0.5f, footZ), new Vector3(rail, h, longLen));
+        var endLen = (hx - cornerGap) * 2f;
+        Wood("Wood_PosZ", new Vector3(0f, h * 0.5f, hz + rail * 0.5f), new Vector3(endLen, h, rail));
+        Wood("Wood_NegZ", new Vector3(0f, h * 0.5f, -hz - rail * 0.5f), new Vector3(endLen, h, rail));
 
         void Diamond(Vector3 pos)
         {
@@ -211,14 +191,29 @@ public sealed class Table : MonoBehaviour
 
     void LongCushion(string name, float x, float zMin, float zMax, PhysicsMaterial cushion, Material mat)
     {
-        BuildCushion(name, new Vector3(x, PoolConstants.CushionHeight * 0.5f, (zMin + zMax) * 0.5f),
-            new Vector3(0.055f, PoolConstants.CushionHeight, Mathf.Abs(zMax - zMin)), cushion, mat);
+        BuildCushion(name, new Vector3(x, PoolConstants.BallRadius, (zMin + zMax) * 0.5f),
+            new Vector3(0.05f, PoolConstants.CushionHeight, Mathf.Abs(zMax - zMin)), cushion, mat);
+        Jaw(new Vector3(x, PoolConstants.BallRadius, zMin), mat);
+        Jaw(new Vector3(x, PoolConstants.BallRadius, zMax), mat);
     }
 
     void EndCushion(string name, float z, float xMin, float xMax, PhysicsMaterial cushion, Material mat)
     {
-        BuildCushion(name, new Vector3((xMin + xMax) * 0.5f, PoolConstants.CushionHeight * 0.5f, z),
-            new Vector3(Mathf.Abs(xMax - xMin), PoolConstants.CushionHeight, 0.055f), cushion, mat);
+        BuildCushion(name, new Vector3((xMin + xMax) * 0.5f, PoolConstants.BallRadius, z),
+            new Vector3(Mathf.Abs(xMax - xMin), PoolConstants.CushionHeight, 0.05f), cushion, mat);
+        Jaw(new Vector3(xMin, PoolConstants.BallRadius, z), mat);
+        Jaw(new Vector3(xMax, PoolConstants.BallRadius, z), mat);
+    }
+
+    void Jaw(Vector3 pos, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        go.name = "CushionJaw";
+        go.transform.SetParent(transform, false);
+        go.transform.localPosition = pos;
+        go.transform.localScale = new Vector3(0.034f, PoolConstants.CushionHeight * 0.5f, 0.034f);
+        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        DestroyCollider(go);
     }
 
     void BuildCushion(string name, Vector3 pos, Vector3 scale, PhysicsMaterial cushion, Material mat)
@@ -231,7 +226,75 @@ public sealed class Table : MonoBehaviour
         var col = go.GetComponent<BoxCollider>();
         col.sharedMaterial = cushion;
         col.contactOffset = 0.0008f;
+        go.AddComponent<CushionBounce>();
         go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+    }
+
+    void BuildPocket(int index, Vector3 pos, bool side, float radius, float rail, LookLibrary look)
+    {
+        PocketCenters[index] = pos + Vector3.up * 0.008f;
+        PocketRadii[index] = radius * 0.82f;
+
+        var mouth = side ? 0.07f : 0.076f;
+        var depth = 0.12f;
+        var segs = 28;
+        var root = new GameObject($"Pocket_{index}");
+        root.transform.SetParent(transform, false);
+        root.transform.localPosition = pos;
+
+        Visual("HoleMouth", root.transform, PocketMesh.Disc(mouth, segs, true), look.Hole,
+            new Vector3(0f, 0.002f, 0f), Quaternion.identity, false);
+        Visual("HoleFloor", root.transform, PocketMesh.Disc(mouth * 0.98f, segs, true), look.Hole,
+            new Vector3(0f, -depth, 0f), Quaternion.identity, false);
+        Visual("LeatherWall", root.transform, PocketMesh.Tube(mouth, depth, segs), look.Leather,
+            new Vector3(0f, 0.002f, 0f), Quaternion.identity, true);
+        Visual("LeatherLip", root.transform, PocketMesh.Ring(mouth * 0.96f, mouth * 1.18f, segs), look.Leather,
+            new Vector3(0f, 0.006f, 0f), Quaternion.identity, true);
+        Visual("MetalRim", root.transform, PocketMesh.Ring(mouth * 1.14f, mouth * 1.34f, segs), look.PocketRim,
+            new Vector3(0f, 0.011f, 0f), Quaternion.identity, true);
+
+        Vector3 outward;
+        if (side)
+        {
+            outward = new Vector3(Mathf.Sign(pos.x), 0f, 0f);
+        }
+        else
+        {
+            outward = new Vector3(Mathf.Sign(pos.x), 0f, Mathf.Sign(pos.z)).normalized;
+        }
+
+        var h = 0.05f;
+        var wrap = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        wrap.name = "PocketWood";
+        wrap.transform.SetParent(root.transform, false);
+        wrap.transform.localPosition = outward * (mouth + 0.058f) + Vector3.up * (h * 0.5f);
+        wrap.transform.localScale = new Vector3(rail * 0.72f, h * 0.5f, rail * 0.72f);
+        wrap.GetComponent<MeshRenderer>().sharedMaterial = look.Wood;
+        DestroyCollider(wrap);
+
+        var triggerGo = new GameObject($"PocketTrigger_{index}");
+        triggerGo.transform.SetParent(transform, false);
+        triggerGo.transform.localPosition = PocketCenters[index];
+        var trigger = triggerGo.AddComponent<SphereCollider>();
+        trigger.isTrigger = true;
+        trigger.radius = radius * 0.78f;
+        trigger.contactOffset = 0.0008f;
+        var pocket = triggerGo.AddComponent<PocketTrigger>();
+        pocket.Index = index;
+    }
+
+    static void Visual(string name, Transform parent, Mesh mesh, Material mat, Vector3 localPos, Quaternion localRot, bool castShadows)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = localPos;
+        go.transform.localRotation = localRot;
+        go.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var rend = go.AddComponent<MeshRenderer>();
+        rend.sharedMaterial = mat;
+        rend.shadowCastingMode = castShadows
+            ? UnityEngine.Rendering.ShadowCastingMode.On
+            : UnityEngine.Rendering.ShadowCastingMode.Off;
     }
 
     static void DestroyCollider(GameObject go)

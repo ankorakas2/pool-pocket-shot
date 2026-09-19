@@ -40,6 +40,7 @@ public sealed class ShotResolver : MonoBehaviour
     public void BeginShot()
     {
         _armed = true;
+        _ignorePocketsUntil = 0f;
         FirstContact = null;
         CueScratch = false;
         CueHitRail = false;

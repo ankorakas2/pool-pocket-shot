@@ -7,6 +7,9 @@ public sealed class LookLibrary
     public Material Wood;
     public Material Cushion;
     public Material Pocket;
+    public Material Leather;
+    public Material PocketRim;
+    public Material Hole;
     public Material Brass;
     public Material Floor;
     public Material Wall;
@@ -33,7 +36,21 @@ public sealed class LookLibrary
         look.Felt = look.Make(new Color(0.1f, 0.46f, 0.24f), 0.11f, 0f, FeltTex(), fabricN, new Vector2(4.5f, 7f));
         look.Wood = look.Make(Color.white, 0.32f, 0f, woodA ?? WoodTex(), woodN, new Vector2(1.6f, 2.4f));
         look.Cushion = look.Make(new Color(0.07f, 0.34f, 0.18f), 0.16f, 0f, FeltTex(), fabricN, new Vector2(3f, 3f));
-        look.Pocket = look.Make(new Color(0.04f, 0.03f, 0.03f), 0.12f, 0.05f, null);
+        look.Pocket = look.Make(new Color(0.02f, 0.015f, 0.015f), 0.06f, 0f, null);
+        look.Leather = look.Make(new Color(0.06f, 0.045f, 0.038f), 0.18f, 0.02f, null);
+        look.PocketRim = look.Make(new Color(0.38f, 0.36f, 0.34f), 0.42f, 0.32f, metalA, metalN, new Vector2(3f, 3f));
+        var unlit = Shader.Find("Universal Render Pipeline/Unlit") ?? sh;
+        look.Hole = new Material(unlit);
+        if (look.Hole.HasProperty("_BaseColor"))
+        {
+            look.Hole.SetColor("_BaseColor", new Color(0.01f, 0.01f, 0.012f, 1f));
+        }
+
+        if (look.Hole.HasProperty("_Color"))
+        {
+            look.Hole.SetColor("_Color", new Color(0.01f, 0.01f, 0.012f, 1f));
+        }
+
         look.Brass = look.Make(new Color(0.85f, 0.68f, 0.28f), 0.55f, 0.72f, metalA, metalN, new Vector2(2f, 2f));
         look.Floor = look.Make(new Color(0.45f, 0.38f, 0.3f), 0.22f, 0f, woodA ?? WoodTex(), woodN, new Vector2(6f, 8f));
         look.Wall = look.Make(new Color(0.07f, 0.08f, 0.1f), 0.15f, 0f, null);

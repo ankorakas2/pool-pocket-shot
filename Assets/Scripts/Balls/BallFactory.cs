@@ -10,15 +10,15 @@ public static class BallFactory
         var rb = go.AddComponent<Rigidbody>();
         rb.mass = 0.17f;
 #if UNITY_6000_0_OR_NEWER
-        rb.linearDamping = 0.35f;
-        rb.angularDamping = 0.55f;
+        rb.linearDamping = 0.14f;
+        rb.angularDamping = 0.08f;
 #else
-        rb.drag = 0.35f;
-        rb.angularDrag = 0.55f;
+        rb.drag = 0.14f;
+        rb.angularDrag = 0.08f;
 #endif
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-        rb.maxAngularVelocity = 40f;
+        rb.maxAngularVelocity = 140f;
         rb.sleepThreshold = 0.005f;
         rb.maxDepenetrationVelocity = 0.45f;
         var ball = go.AddComponent<Ball>();
